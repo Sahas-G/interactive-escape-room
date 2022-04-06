@@ -37,7 +37,7 @@ class keyboardController:
         "rClick": 'z'
     }
 
-# False--> Not being pressed, True--> Being Pressed
+    # False--> Not being pressed, True--> Being Pressed
     keyState = {
         'w': False,
         's': False,
@@ -92,7 +92,9 @@ class keyboardController:
                     if not self.keyState[action]:
                         self.startKey(action)
 
+
 kb = keyboardController()
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -229,7 +231,7 @@ def main():
                 if hand_sign_id == 3:
                     kb.processMovement('backward', 'NAV')
                 else:
-                    kb.processMovement('neutral','NAV')
+                    kb.processMovement('neutral', 'NAV')
 
                 # if hand_sign_id == 0:
                 #     pyautogui.keyUp('a')
@@ -251,7 +253,6 @@ def main():
                 #     pyautogui.keyUp('a')
                 #     pyautogui.keyUp('w')
                 #     pyautogui.keyDown('s')
-
 
                 # if hand_sign_id == "not applicable":  # Point gesture
                 #     point_history.append(landmark_list[8])
