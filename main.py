@@ -1,10 +1,12 @@
 import time
 import pyautogui
 
+
 class gameState:
-    #this class will be used to ensure we enable the appropriate gestures in the given context
+    # this class will be used to ensure we enable the appropriate gestures in the given context
 
     stateModes = ["Menu", "Gameplay", "Inventory", "Diary"]
+
 
 class keyboardController:
     keyMap = {
@@ -25,7 +27,7 @@ class keyboardController:
         "rClick": 'z'
     }
 
-# False--> Not being pressed, True--> Being Pressed
+    # False--> Not being pressed, True--> Being Pressed
     keyState = {
         'w': False,
         's': False,
@@ -61,7 +63,7 @@ class keyboardController:
         self.keyState[self.keyMap[action]] = False
 
     def processMovement(self, action, mode='NAV'):
-        #Look at the state, if the action is new, turn off everything else, and turn on new one.
+        # Look at the state, if the action is new, turn off everything else, and turn on new one.
         # Mode = NAV or PAN
 
         if mode == 'NAV':
@@ -72,13 +74,13 @@ class keyboardController:
         if action == 'neutral':
             for item in scope:
                 self.stopKey(item)
-
         else:
             for nav in scope:
-                if action!= nav:
+                if action is not nav:
                     self.stopKey(action)
                 else:
-                    self.startKey(action)
+                    if not self.keyState[action]:
+                        self.startKey(action)
 
 
 if __name__ == '__main__':
@@ -86,15 +88,14 @@ if __name__ == '__main__':
 
     kb = keyboardController()
 
-    #SETUP
+    # SETUP
     # Initialise OPenCV Model
-    #Initialise Speech Recognition
+    # Initialise Speech Recognition
     # Create Class Objects
 
     time.sleep(5)
 
     while True:
-
         # continuous = ["forward", "backward", "right", "left", "pan_down", "pan_up", "pan_right", "pan_left"]
         # for item in continuous:
         #     kb.startKey(item)
@@ -104,14 +105,11 @@ if __name__ == '__main__':
         # # for other_item in ["inventory", "diary", 'flashlight', "pause"]:
         # #     kb.pressKey(other_item)
 
-    #Step1: Look for speech/ gesture Trigger
-    #Step2: If there is a trigger Validate the input can be used in the game state
-    #Step3: If valid trigger --> Push to keyboard & update game state
-
+        # Step1: Look for speech/ gesture Trigger
+        # Step2: If there is a trigger Validate the input can be used in the game state
+        # Step3: If valid trigger --> Push to keyboard & update game state
 
         pyautogui.moveTo(100, 200)
         time.sleep(3)
         pyautogui.moveTo(200, 100)
         time.sleep(3)
-
-
