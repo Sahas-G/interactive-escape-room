@@ -20,7 +20,8 @@ class keyboardController:
         "pan_down": 'down',
         "pan_right": 'right',
         "pan_left": 'left',
-        "enter": 'enter'
+        "enter": 'enter',
+        "click": 'q'
     }
 
 # False--> Not being pressed, True--> Being Pressed
@@ -38,7 +39,8 @@ class keyboardController:
         'enter': False,
         'i': False,
         'j': False,
-        't': False
+        't': False,
+        'q': False
     }
 
     def startKey(self, action):
@@ -59,15 +61,24 @@ if __name__ == '__main__':
 
     kb = keyboardController()
 
+    #SETUP
+    # Initialise OPenCV Model
+    #Initialise Speech Recognition
+    # Create Class Objects
+
     while True:
 
-        continuous = ["forward", "backward", "right", "left", "pan_up", "pan_down", "pan_right", "pan_left"]
-        for item in continuous:
-            kb.startKey(item)
-            time.sleep(1)
-            kb.stopKey(item)
+        # continuous = ["forward", "backward", "right", "left", "pan_up", "pan_down", "pan_right", "pan_left"]
+        # for item in continuous:
+        #     kb.startKey(item)
+        #     time.sleep(1)
+        #     kb.stopKey(item)
+        #
+        # # for other_item in ["inventory", "diary", 'flashlight', "pause"]:
+        # #     kb.pressKey(other_item)
 
-        # for other_item in ["inventory", "diary", 'flashlight', "pause"]:
-        #     kb.pressKey(other_item)
+    #Step1: Look for speech/ gesture Trigger
+    #Step2: If there is a trigger Validate the input can be used in the game state
+    #Step3: If valid trigger --> Push to keyboard & update game state
 
 
