@@ -30,7 +30,6 @@ class keyboardController:
         's': False,
         'd': False,
         'a': False,
-        'i': False,
         'esc': False,
         'up': False,
         'down': False,
@@ -44,11 +43,11 @@ class keyboardController:
     }
 
     def startKey(self, action):
-        pyautogui.keyUp(self.keyMap[action])
+        pyautogui.keyDown(self.keyMap[action])
         self.keyState[self.keyMap[action]] = True
 
     def stopKey(self, action):
-        pyautogui.keyDown(self.keyMap[action])
+        pyautogui.keyUp(self.keyMap[action])
         self.keyState[self.keyMap[action]] = False
 
     def pressKey(self, action):
