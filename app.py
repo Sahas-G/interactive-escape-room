@@ -89,7 +89,7 @@ class keyboardController:
                 if action is not nav:
                     self.stopKey(action)
                 else:
-                    if not self.keyState[action]:
+                    if not self.keyState[self.keyMap[action]]:
                         self.startKey(action)
 
 
