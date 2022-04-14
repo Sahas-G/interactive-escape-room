@@ -16,87 +16,6 @@ from model import KeyPointClassifier
 from model import PointHistoryClassifier
 
 
-# import pyautogui
-
-
-# class keyboardController:
-#     keyMap = {
-#         "forward": 'w',
-#         "backward": 's',
-#         "right": 'd',
-#         "left": 'a',
-#         "inventory": 'i',
-#         "diary": 'j',
-#         'flashlight': 't',
-#         "pause": 'esc',
-#         "pan_up": 'up',
-#         "pan_down": 'down',
-#         "pan_right": 'right',
-#         "pan_left": 'left',
-#         "enter": 'enter',
-#         "click": 'q',
-#         "rClick": 'z'
-#     }
-#
-#     # False--> Not being pressed, True--> Being Pressed
-#     keyState = {
-#         'w': False,
-#         's': False,
-#         'd': False,
-#         'a': False,
-#         'esc': False,
-#         'up': False,
-#         'down': False,
-#         'right': False,
-#         'left': False,
-#         'enter': False,
-#         'i': False,
-#         'j': False,
-#         't': False,
-#         'q': False,
-#         'z': False
-#     }
-#
-#     navStates = ['forward', 'backward', 'left', 'right']
-#     panStates = ['pan_up', 'pan_down', 'pan_left', 'pan_right']
-#
-#     def startKey(self, action):
-#         pyautogui.keyDown(self.keyMap[action])
-#         self.keyState[self.keyMap[action]] = True
-#
-#     def stopKey(self, action):
-#         pyautogui.keyUp(self.keyMap[action])
-#         self.keyState[self.keyMap[action]] = False
-#
-#     def pressKey(self, action):
-#         self.keyState[self.keyMap[action]] = True
-#         pyautogui.press(self.keyMap[action])
-#         self.keyState[self.keyMap[action]] = False
-#
-#     def processMovement(self, action, mode='NAV'):
-#         # Look at the state, if the action is new, turn off everything else, and turn on new one.
-#         # self.mode = NAV or PAN
-#
-#         if self.mode == 'NAV':
-#             scope = self.navStates
-#         else:
-#             scope = self.panStates
-#
-#         if action == 'neutral':
-#             for item in scope:
-#                 self.stopKey(item)
-#         else:
-#             for nav in scope:
-#                 if action is not nav:
-#                     self.stopKey(action)
-#                 else:
-#                     if not self.keyState[action]:
-#                         self.startKey(action)
-#
-#
-# kb = keyboardController()
-
-
 class gestureRecognition:
 
     def get_args(self):
@@ -120,35 +39,54 @@ class gestureRecognition:
 
         return args
 
-    def __init__(self, kb):
-        self.kb = kb
+    def __init__(self):
+        self.kbStates = {
+            "forward": False,
+            "backward": False,
+            "right": False,
+            "left": False,
+            "inventory": False,
+            "diary": False,
+            "flashlight": False,
+            "pause": False,
+            "pan_up": False,
+            "pan_down": False,
+            "pan_right": False,
+            "pan_left": False,
+            "enter": False,
+            "click": False,
+            "rClick": False
+        }
         # Argument parsing #################################################################
         args = self.get_args()
 
-        cap_device = args.device
-        cap_width = args.width
-        cap_height = args.height
+        self.cap_device = args.device
+        self.cap_width = args.width
+        self.cap_height = args.height
 
-        use_static_image_mode = args.use_static_image_mode
-        min_detection_confidence = args.min_detection_confidence
-        min_tracking_confidence = args.min_tracking_confidence
+        self.use_static_image_mode = args.use_static_image_mode
+        self.min_detection_confidence = args.min_detection_confidence
+        self.min_tracking_confidence = args.min_tracking_confidence
 
         self.use_brect = True
 
+    def prepCamera(self):
         # Camera preparation ###############################################################
-        self.cap = cv.VideoCapture(cap_device)
-        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
-        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
+        self.cap = cv.VideoCapture(self.cap_device)
+        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, self.cap_width)
+        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, self.cap_height)
 
+    def loadModel(self):
         # Model load #############################################################
         mp_hands = mp.solutions.hands
         self.hands = mp_hands.Hands(
-            static_image_mode=use_static_image_mode,
+            static_image_mode=self.use_static_image_mode,
             max_num_hands=2,
-            min_detection_confidence=min_detection_confidence,
-            min_tracking_confidence=min_tracking_confidence,
+            min_detection_confidence=self.min_detection_confidence,
+            min_tracking_confidence=self.min_tracking_confidence,
         )
 
+    def remainingStuff(self):
         self.keypoint_classifier = KeyPointClassifier()
 
         self.point_history_classifier = PointHistoryClassifier()
@@ -228,16 +166,19 @@ class gestureRecognition:
                 # Hand sign classification
                 hand_sign_id = self.keypoint_classifier(pre_processed_landmark_list)
 
+                print(hand_sign_id)
                 if hand_sign_id == 0:
-                    self.kb.processMovement('forward', 'NAV')
-                if hand_sign_id == 1:
-                    self.kb.processMovement('left', 'NAV')
-                if hand_sign_id == 2:
-                    self.kb.processMovement('right', 'NAV')
-                if hand_sign_id == 3:
-                    self.kb.processMovement('backward', 'NAV')
+                    print("Going Forward")
+                    self.kbStates["forward"] = "continuous"
+                elif hand_sign_id == 1:
+                    self.kbStates["forward"] = False
+
+                elif hand_sign_id == 2:
+                    self.kbStates["forward"] = False
+                elif hand_sign_id == 3:
+                    self.kbStates["forward"] = False
                 else:
-                    self.kb.processMovement('neutral', 'NAV')
+                    self.kbStates["forward"] = False
 
                 # if hand_sign_id == "not applicable":  # Point gesture
                 #     self.point_history.append(landmark_list[8])
@@ -268,12 +209,15 @@ class gestureRecognition:
                 )
         else:
             self.point_history.append([0, 0])
+            self.kbStates["forward"] = False
 
         debug_image = self.draw_point_history(debug_image, self.point_history)
         debug_image = self.draw_info(debug_image, fps, self.mode, number)
 
         # Screen reflection #############################################################
         cv.imshow('Hand Gesture Recognition', debug_image)
+
+        return self.kbStates
 
     def cleanup(self):
         self.cap.release()
