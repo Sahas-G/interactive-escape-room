@@ -5,7 +5,7 @@ import time
 from google.cloud import speech
 import pyaudio
 from six.moves import queue
-import pyautogui
+# import pyautogui
 
 import os
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="./room-escape-speech-58a8764cc576.json"
@@ -136,7 +136,7 @@ class ResumableMicrophoneStream:
             yield b"".join(data)
 
 
-def listen_print_loop(responses, stream):
+def listen_print_loop(responses, stream, keyStateData):
     """Iterates through server responses and prints them.
     The responses passed is a generator that will block until a response
     is provided by the server.
@@ -150,6 +150,23 @@ def listen_print_loop(responses, stream):
     """
 
     for response in responses:
+        tmpKeyData = {
+            "forward": None,
+            "backward": None,
+            "right": None,
+            "left": None,
+            "inventory": None,
+            "diary": None,
+            "flashlight": None,
+            "pause": None,
+            "pan_up": None,
+            "pan_down": None,
+            "pan_right": None,
+            "pan_left": None,
+            "enter": None,
+            "click": None,
+            "rClick": None
+        }
 
         if get_current_time() - stream.start_time > STREAMING_LIMIT:
             stream.start_time = get_current_time()
@@ -187,44 +204,17 @@ def listen_print_loop(responses, stream):
         if result.is_final:
 
             sys.stdout.write(GREEN)
-            # if re.search(r"\b(look left)\b", transcript, re.I):
-            #     pyautogui.press('left')
-            #     print("pressing left arrow")
-            # elif re.search(r"\b(look right)\b", transcript, re.I):
-            #     pyautogui.press('right')
-            #     print("pressing right")
-            # elif re.search(r"\b(left)\b", transcript, re.I):
-            #     pyautogui.press('w')
-            #     print("pressing w")
-            # elif re.search(r"\b(right)\b", transcript, re.I):
-            #     pyautogui.press('d')
-            #     print("pressing d")
-            #
-            # elif re.search(r"\b(up)\b", transcript, re.I):
-            #     pyautogui.press('up')
-            #     print("pressing up")
-            # elif re.search(r"\b(down)\b", transcript, re.I):
-            #     pyautogui.press('down')
-            #     print("pressing down")
 
             if re.search(r"\b(open|yes|sure|close|on|off)\b", transcript, re.I):
-                pyautogui.press('q')
-                print("pressing q")
-            elif ("inventory" in transcript ) or ("go back" in transcript):
-                pyautogui.press('i')
-                print("pressing i")
-            elif re.search(r"\b(left)\b", transcript, re.I):
-                for i in range(125):
-                    pyautogui.press('left')
-                    print("pressing left")
-            elif re.search(r"\b(right)\b", transcript, re.I):
-                for i in range(125):
-                    pyautogui.press('right')
-                    print("pressing right")
-            elif re.search(r"\b(forward)\b", transcript, re.I):
-                for i in range(125):
-                    pyautogui.keyDown('w')
-                    print("pressing w")
+                tmpKeyData["click"] = "single"
+            elif "inventory" in transcript:
+                tmpKeyData["inventory"] = "single"
+            elif re.search(r"\b(back)\b", transcript, re.I):
+                tmpKeyData["rClick"] = "single"
+            elif re.search(r"\b(diary)\b", transcript, re.I):
+                tmpKeyData["diary"] = "single"
+            elif re.search(r"\b(flashlight)\b", transcript, re.I):
+                tmpKeyData["flashlight"] = "single"
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
 
             stream.is_final_end_time = stream.result_end_time
@@ -238,6 +228,8 @@ def listen_print_loop(responses, stream):
                 stream.closed = True
                 break
 
+            keyStateData.put(tmpKeyData)   # for communication between processes.
+
         else:
             sys.stdout.write(RED)
             sys.stdout.write("\033[K")
@@ -246,7 +238,7 @@ def listen_print_loop(responses, stream):
             stream.last_transcript_was_final = False
 
 
-def main():
+def mainSpeechRecognition(keyStateData):
     """start bidirectional streaming from microphone input to speech API"""
 
     client = speech.SpeechClient(client_options={
@@ -289,7 +281,7 @@ def main():
             responses = client.streaming_recognize(streaming_config, requests)
 
             # Now, put the transcription responses to use.
-            listen_print_loop(responses, stream)
+            listen_print_loop(responses, stream, keyStateData)
 
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
@@ -306,6 +298,6 @@ def main():
 
 if __name__ == "__main__":
 
-    main()
+    mainSpeechRecognition()
 
 # [END speech_transcribe_infinite_streaming]

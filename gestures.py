@@ -168,11 +168,10 @@ class gestureRecognition:
 
                 print(hand_sign_id)
                 if hand_sign_id == 0:
-                    print("Going Forward")
+                    # print("Going Forward")
                     self.kbStates["forward"] = "continuous"
                 elif hand_sign_id == 1:
                     self.kbStates["forward"] = False
-
                 elif hand_sign_id == 2:
                     self.kbStates["forward"] = False
                 elif hand_sign_id == 3:

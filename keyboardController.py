@@ -62,11 +62,19 @@ class keyboardController:
     panStates = ['pan_up', 'pan_down', 'pan_left', 'pan_right']
 
     def updateKeyData(self, newKeyData):
-        self.oldKeyState = self.currentKeyState
-        self.currentKeyState = newKeyData
+        self.oldKeyState = self.currentKeyState.copy()
+
+        for iter in newKeyData.keys():
+            if newKeyData[iter] is None:
+                pass
+            else:
+                self.currentKeyState[iter] = newKeyData[iter]
+
         for action in self.oldKeyState.keys():
-            if self.oldKeyState[action] == "continuous" and self.currentKeyState[action] == False:
+
+            if self.oldKeyState[action] == "continuous" and self.currentKeyState[action] is False:
                 self.stopKey(action)
+                print("Stopped %s" % action)
 
     """
     Goes through list of all the keys. If state is single, press key once and set the state to default of False

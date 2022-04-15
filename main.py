@@ -4,6 +4,7 @@ from gestures import gestureRecognition
 from keyboardController import keyboardController
 import gameState
 import multiprocessing
+from speechRecognition import mainSpeechRecognition
 
 
 class interactionClass:
@@ -47,6 +48,10 @@ class interactionClass:
                 self.kb.updateKeyData(keyStateData.get())
             self.kb.executeKeys()
 
+    def speechProcess(self, keyStateData):
+        print("Start of Speech Recognition Process")
+        mainSpeechRecognition(keyStateData)
+
     def startThreads(self):
         with multiprocessing.Manager() as manager:
             keyStateData = multiprocessing.Queue()
@@ -57,7 +62,11 @@ class interactionClass:
             process2 = multiprocessing.Process(target=self.keyBoardProcess, args=(keyStateData,))
             process2.start()
 
+            process3 = multiprocessing.Process(target=self.speechProcess, args=(keyStateData,))
+            process3.start()
+
             process2.join()
+            process3.join()
             process1.join()
 
 
