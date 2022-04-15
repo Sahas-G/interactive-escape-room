@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "room-escape-speech",
+  "private_key_id": "58a8764cc576189d8374c792b54b3ccfad1b7748",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCjkKkPxfz7zhOa\nCwl2eD6xDrI7DqEk4efb5X80MK6UxzX/54unPFmYV6UquYtCAvmZT0uLnGUQAkap\nKXaEZLQGJ4eJXMPBisGoCEYY8ySAhub5bf2lx+5wSaM5MAdWeMnbiMZ4RUvpYkY+\nA2hNnVflrWgxONKTInaifFHqkjDoH+xmMyvGyxOCIm6Lu/2MlA+2wc4t1b8Geerb\ncGoqiuR49NjbhAVn61oHVnfbNXFzRYOx2BBrylxpgwWSKlMS+tdsEHzqitVoIOas\n6XORUbwT/eL8dJrJlCnADhqJbhqNkQmTbttH15fD6s2829DmfvrQsvIY7buEr6Th\nXPXig6AfAgMBAAECggEAR4GXl3C7/62A/kgy89rvtWIyYwUrR7+HKKg1KzDZMevB\nXMXyVMNae/JdH8eL7Oj2C6MR6NAPkqccExowWQLZfRNM+q1WW0d5ECfF1WR+ob3Y\nPlVqnU5BnE9lDzxDCPe3b8Vk1vGclUREZxoAQGY4Jg3gThyEWpSnfrOQ8FbHEMMp\nFEi/BBuyu74gQ/gKtYiRWF4L3HuZvWEAIqkBukIsCLxvBe6dtC19eRggIIAUuFT0\npfrxm6but9FqL43a7FvSC/BdEU9S5zj4snkrg+Lz2Wft0uabRIHRJJmFXCG6t9TQ\nEDldHrm3fWRaQ9XARBVLQysWo9Gr+LxWf22s3RXO8QKBgQDRUQDNSR/oE5Fhp7mu\nqWVtB/nOwDzDlMjYlMraypwgjTz0ZcoUjSvmRzrG4Ygi3wcU9iMd91htGJrqbBef\nNeRVFoKVAxzN7uZmejlRFXpjxe5uJCdECGvotjUPQbEXjTKEh7QoWrRZR2zSERRl\nDujcStjL9VmfrDjUq6hxa5ZJFwKBgQDIC3fNG+KhnyXoyHNLqmfts9pW6oGh/GTQ\nhDw2KgcsZmAbaFX4FbfHroJzvMOyRf43Tyz1U58dzHpmkf/8+k7b+TKCLj774TwA\nqcIxUxDqj4VhSZh0dC4y8/f+4+xgzBpdFCa695WTbnTavlG30+1Lyv90beXnFsil\n4JZyuwG2OQKBgEYa+UfIXBVgqGqqwHgNaFkSOMrUfAWNiY9wllidT5lfdLDufrZP\nagqghMEjvHLhe/+7SJu6wjUX7prhRTAf3q/Y8Dd0aWtXvndILHZJ2UodevQMy9Hv\neCTjEfZgLC4VLnxQ7zgs2Qal836QFeKbEcbmkqINNM1T41zneW0zeYxVAoGAed96\nukwN03d5CgvtKiEENi4HjEJMfdqdtOeLI1iRjDxGuwvirETW9WFc+pP7CcZYrWug\nMUoju2zS+WBje8UnfB6i5eq01pGPE7xYoeJAgRa1JONIbVJGvyYhZXmIjiRqv2BC\nhE/IIcz+hjHC6WLExBNFdLJriVE5Js3f+r/xuAkCgYBktGsUgr++KZlxgvahgpD7\nSojgaMgNikpatfIqMm1xroh3goBkiw7GEzeAd0hGHXyjj+xF3bfbepyBHDRLnXuw\n6iEqA9ox0RcO3Ne+Yb6ufI88qgjNf8Z/1/dz9tdD7QoMGa5fYZVhgVyZ9GNVaNcK\nTqR0kptAe62tl5qo/0yYzQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "escape-room-test@room-escape-speech.iam.gserviceaccount.com",
+  "client_id": "112499665496387425797",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/escape-room-test%40room-escape-speech.iam.gserviceaccount.com"
+}

@@ -7,6 +7,9 @@ import pyaudio
 from six.moves import queue
 import pyautogui
 
+import os
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="./room-escape-speech-58a8764cc576.json"
+
 # Audio recording parameters
 STREAMING_LIMIT = 240000  # 4 minutes
 SAMPLE_RATE = 16000
@@ -246,7 +249,9 @@ def listen_print_loop(responses, stream):
 def main():
     """start bidirectional streaming from microphone input to speech API"""
 
-    client = speech.SpeechClient()
+    client = speech.SpeechClient(client_options={
+        "api_key" : "AIzaSyCQMg8J2kJ5iO5N7WhAY72Swn1KcIMmzH0"
+    })
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=SAMPLE_RATE,
