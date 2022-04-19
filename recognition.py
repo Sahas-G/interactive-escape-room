@@ -13,7 +13,7 @@ wCam, hCam = 640, 480
 frameReduction = 100
 smoothingThreshold = 5
 wScr, hScr = pyautogui.size()  # Outputs the high and width of the screen
-plocX, plocY = 0, 0
+# plocX, plocY = 0, 0
 threshold = 20
 
 # Defined as top left to bottom right of the zone
@@ -24,6 +24,24 @@ hotZones = {
     "down": [(0, hScr * 3 / 4), (wScr, hScr)],
     "neutral": [(wScr / 4, hScr / 4), (wScr * 3 / 4, hScr * 3 / 4)]
 }
+
+Keys = {
+            "forward": None,
+            "backward": None,
+            "right": None,
+            "left": None,
+            "inventory": None,
+            "diary": None,
+            "flashlight": None,
+            "pause": None,
+            "pan_up": None,
+            "pan_down": None,
+            "pan_right": None,
+            "pan_left": None,
+            "enter": None,
+            "click": None,
+            "rClick": None
+        }
 
 def inZones(x, y):
     """
@@ -40,6 +58,7 @@ def inZones(x, y):
             if zone[0][1] <= y < zone[1][1]:
                 zoneList.append(zone_name)
     return zoneList
+
 
 def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
     """
@@ -59,6 +78,7 @@ def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
 
     return scaled_value
 
+
 def calc_euclidean_distance(x1, y1, x2, y2):
     """
     calculate euclidean distance between two points
@@ -71,6 +91,7 @@ def calc_euclidean_distance(x1, y1, x2, y2):
     """
     dist = ((x2 - x1) ** 2 + (y2 - y1) ** 2)
     return math.sqrt(dist)
+
 
 def mediapipe_detection(image, model):
     """
@@ -87,6 +108,7 @@ def mediapipe_detection(image, model):
     image.flags.writeable = True  # Image is now writeable
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # COLOR COVERSION RGB 2 BGR
     return image, results
+
 
 def draw_styled_landmarks(image, results):
     """
@@ -111,6 +133,7 @@ def draw_styled_landmarks(image, results):
                               mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
                               )
 
+
 def extract_keypoints(results):
     """
     extract landmark points from pose & hand MediaPipe model
@@ -118,10 +141,15 @@ def extract_keypoints(results):
     :param results: frames after processed by MediaPipe model
     :return: cancatenated numpy array
     """
-    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
+    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in
+                     results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33 * 4)
+    lh = np.array([[res.x, res.y, res.z] for res in
+                   results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21 * 3)
+    rh = np.array([[res.x, res.y, res.z] for res in
+                   results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(
+        21 * 3)
     return np.concatenate([pose, lh, rh])
+
 
 def navigation_recognition(results, plocX, plocY):
     """
@@ -132,12 +160,13 @@ def navigation_recognition(results, plocX, plocY):
     :param plocY:
     :return: a list of zones that nav
 
-    FUTURE IMPROVMENT:
+    FUTURE IMPROVEMENT:
     not just detect hand, but detect specific gestures, e.g. having only one index finger
     """
 
     landmarkList = []
     zoneList = []
+    returnX, returnY = plocX, plocY
 
     if results.right_hand_landmarks is not None:
         # len(results.right_hand_landmarks.landmark) = 21
@@ -153,17 +182,16 @@ def navigation_recognition(results, plocX, plocY):
         scaledY = scaling(y1, 1, 0, hScr, 0)
 
         if calc_euclidean_distance(scaledX, scaledY, plocX, plocY) > threshold:
-            pyautogui.moveTo(wScr - scaledX, scaledY)
-            plocX = scaledX
-            plocY = scaledY
+            # pyautogui.moveTo(wScr - scaledX, scaledY)
+            returnX = scaledX
+            returnY = scaledY
 
-            zoneList = inZones(wScr - scaledX, scaledY)
+        zoneList = inZones(wScr - scaledX, scaledY)
 
-    return zoneList
+    return zoneList, returnX, returnY
 
 
 def action_recognition(results, sequence):
-
     """
     theoretically this is where we do the action recognition
     :param results:
@@ -171,50 +199,83 @@ def action_recognition(results, sequence):
     :return:
     """
 
-    keypoints = extract_keypoints(results)
-    sequence.append(keypoints)
-    sequence = sequence[-30:]
-
-    if len(sequence) == 30:
-        res = model.predict(np.expand_dims(sequence, axis=0))[0]
-        print(actions[np.argmax(res)])
-        predictions.append(np.argmax(res))
+    # keypoints = extract_keypoints(results)
+    # sequence.append(keypoints)
+    # sequence = sequence[-30:]
+    #
+    # if len(sequence) == 30:
+    #     res = model.predict(np.expand_dims(sequence, axis=0))[0]
+    #     print(actions[np.argmax(res)])
+    #     predictions.append(np.argmax(res))
     pass
 
 
+def recognitionLoop(keyStateData):
+    cap = cv2.VideoCapture(0)
+    # VideoCapture(0), 0 means the default camera for our PC/laptop
+    # if we have several cameras, the number refers to USB port number.
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, wCam)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, hCam)
 
-cap = cv2.VideoCapture(0)
-# VideoCapture(0), 0 means the default camera for our PC/laptop
-# if we have several cameras, the number refers to USB port number.
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, wCam)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, hCam)
+    # initialize empty sequence, used to hold the most recent 30 sequences for action recognition
+    sequence = []
 
-# initialize empty sequence, used to hold the most recent 30 sequences for action recognition
-sequence = []
+    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+        # increase min_detection_confidence & min_tracking_confidence for better accuracy
 
-with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
-    # increase min_detection_confidence & min_tracking_confidence for better accuracy
+        # while video capture device is open
+        plocX, plocY = 0, 0
+        oldZones = []
+        while cap.isOpened():
+            # capture frame by frame
+            # red is a boolean, indicating if a frame is read correctly
 
-    # while video capture device is open
-    while cap.isOpened():
-        # capture frame by frame
-        # red is a boolean, indicating if a frame is read correctly
-        ret, frame = cap.read()
+            tmpKeyData = Keys.copy()
 
-        image, results = mediapipe_detection(frame, holistic)
+            ret, frame = cap.read()
 
-        navigation_recognition(results, plocX, plocY)
+            image, results = mediapipe_detection(frame, holistic)
 
-        action_recognition(results, sequence)
+            zones, plocX, plocY = navigation_recognition(results, plocX, plocY)
 
-        cv2.imshow('Webcam Feed w. hand & pose detection', cv2.flip(image, 1))
-        # name the frame, and render the image that we just processed (and flip it to mirror us)
+            print(zones)
+            if not (zones == oldZones):
+                if len(zones) >0:
+                    print("New Data")
+                    for item in zones:
+                        if item == "left":
+                            tmpKeyData["pan_left"] = "continuous"
+                        if item == "right":
+                            tmpKeyData["pan_right"] = "continuous"
+                        if item == "up":
+                            tmpKeyData["pan_up"] = "continuous"
+                        if item == "down":
+                            tmpKeyData["pan_down"] = "continuous"
+                        if item == "neutral":
+                            # tmpKeyData["forward"] = "continuous"
+                            pass
 
-        if cv2.waitKey(10) & 0xFF == ord('q'):
-            # we can hit "q" to exit out the frame
-            break
+                else:
+                    print("Stop Data")
+                    tmpKeyData["pan_left"] = False
+                    tmpKeyData["pan_right"] = False
+                    tmpKeyData["pan_up"] = False
+                    tmpKeyData["pan_down"] = False
+                    # tmpKeyData["forward"] = False
+
+                keyStateData.put(tmpKeyData)
+                oldZones = zones
+
+            # action_recognition(results, sequence)
 
 
 
-cap.release()
-cv2.destroyAllWindows()
+            cv2.imshow('Webcam Feed w. hand & pose detection', cv2.flip(image, 1))
+            # name the frame, and render the image that we just processed (and flip it to mirror us)
+
+            if cv2.waitKey(10) & 0xFF == ord('q'):
+                # we can hit "q" to exit out the frame
+                break
+
+    cap.release()
+    cv2.destroyAllWindows()

@@ -5,6 +5,7 @@ from keyboardController import keyboardController
 import gameState
 import multiprocessing
 from speechRecognition import mainSpeechRecognition
+from recognition import recognitionLoop
 
 
 class interactionClass:
@@ -29,22 +30,23 @@ class interactionClass:
         }
 
     def gestureProcess(self, keyStateData):
-        self.gestureObj = gestureRecognition()
-        self.gestureObj.prepCamera()
-        self.gestureObj.loadModel()
-        self.gestureObj.remainingStuff()
+        # self.gestureObj = gestureRecognition()
+        # self.gestureObj.prepCamera()
+        # self.gestureObj.loadModel()
+        # self.gestureObj.remainingStuff()
 
         print("Starting Gesture Recognition Process")
 
         while True:
-            keyStateData.put(self.gestureObj.findGesture())
+            # keyStateData.put(self.gestureObj.findGesture())
+            recognitionLoop(keyStateData)
 
     def keyBoardProcess(self, keyStateData):
 
         print("Starting Keyboard Process")
 
         while True:
-            if not keyStateData.empty():
+            while not keyStateData.empty():
                 self.kb.updateKeyData(keyStateData.get())
             self.kb.executeKeys()
 
