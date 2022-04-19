@@ -165,7 +165,8 @@ def listen_print_loop(responses, stream, keyStateData):
             "pan_left": None,
             "enter": None,
             "click": None,
-            "rClick": None
+            "rClick": None,
+            "focus": None
         }
 
         if get_current_time() - stream.start_time > STREAMING_LIMIT:
@@ -215,6 +216,8 @@ def listen_print_loop(responses, stream, keyStateData):
                 tmpKeyData["diary"] = "single"
             elif re.search(r"\b(flashlight)\b", transcript, re.I):
                 tmpKeyData["flashlight"] = "single"
+            elif re.search(r"\b(focus)\b", transcript, re.I):
+                tmpKeyData["focus"] = "single"
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
 
             stream.is_final_end_time = stream.result_end_time

@@ -34,7 +34,8 @@ class keyboardController:
         "pan_left": 'left',
         "enter": 'enter',
         "click": 'q',
-        "rClick": 'z'
+        "rClick": 'z',
+        "focus": 'g'
     }
 
     # False--> Not being pressed, True--> Being Pressed
@@ -53,7 +54,8 @@ class keyboardController:
         'j': False,
         't': False,
         'q': False,
-        'z': False
+        'z': False,
+        'g': False
     }
 
     navStates = ['forward', 'backward', 'left', 'right']

@@ -28,10 +28,6 @@ hotZones = {
     "neutral": [(wScr / 4, hScr / 4), (wScr * 3 / 4, hScr * 3 / 4)]
 }
 
-actionMovements = {
-    ""
-}
-
 Keys = {
             "forward": None,
             "backward": None,
@@ -47,7 +43,8 @@ Keys = {
             "pan_left": None,
             "enter": None,
             "click": None,
-            "rClick": None
+            "rClick": None,
+            "focus": None
         }
 
 actions = np.array(['move', 'click', 'pan left', 'pan right', 'pan up', 'pan down'])
