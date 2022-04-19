@@ -40,7 +40,8 @@ Keys = {
             "pan_left": None,
             "enter": None,
             "click": None,
-            "rClick": None
+            "rClick": None,
+            "focus": None
         }
 
 def inZones(x, y):
@@ -149,8 +150,6 @@ def extract_keypoints(results):
                    results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(
         21 * 3)
     return np.concatenate([pose, lh, rh])
-
-
 def navigation_recognition(results, plocX, plocY):
     """
     detect if there's a right hand in the processed frames (results)
