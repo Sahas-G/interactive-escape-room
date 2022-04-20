@@ -91,6 +91,7 @@ class keyboardController:
             elif self.currentKeyState[action] == "single":
                 pyautogui.press(self.keyMap[action])
                 self.currentKeyState[action] = False
+                print("Executed: %s" % action)
             elif self.currentKeyState[action] == "continuous":
                 self.startKey(action)
 

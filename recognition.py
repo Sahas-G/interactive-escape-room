@@ -18,14 +18,15 @@ smoothingThreshold = 5
 wScr, hScr = pyautogui.size()  # Outputs the high and width of the screen
 # plocX, plocY = 0, 0
 threshold = 20
+recognition_threshold = 0.7
 
 # Defined as top left to bottom right of the zone
 hotZones = {
-    "left": [(0, 0), (wScr / 4, hScr)],
-    "right": [(wScr * 3 / 4, 0), (wScr, hScr)],
-    "up": [(0, 0), (wScr, hScr / 4)],
-    "down": [(0, hScr * 3 / 4), (wScr, hScr)],
-    "neutral": [(wScr / 4, hScr / 4), (wScr * 3 / 4, hScr * 3 / 4)]
+    "left": [(0, 0), (wScr / 3, hScr)],
+    "right": [(wScr * 2 / 3, 0), (wScr, hScr)],
+    "up": [(0, 0), (wScr, hScr / 3)],
+    "down": [(0, hScr * 3 / 5), (wScr, hScr)],
+    "neutral": [(wScr / 3, hScr / 3), (wScr * 2 / 3, hScr * 2 / 3)]
 }
 
 Keys = {
@@ -47,7 +48,7 @@ Keys = {
             "focus": None
         }
 
-actions = np.array(['move', 'click', 'pan left', 'pan right', 'pan up', 'pan down'])
+actions = np.array(['move', 'select', 'click', 'flip', 'grab'])
 sequence = []
 
 def inZones(x, y):
@@ -117,7 +118,7 @@ def mediapipe_detection(image, model):
     return image, results
 
 
-def draw_styled_landmarks(image, results):
+def draw_hand_landmarks(image, results):
     """
 
     :param image: every frame in OpenCV
@@ -125,10 +126,10 @@ def draw_styled_landmarks(image, results):
     :return: N/A
     """
     # Draw body pose landmarks
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(80, 22, 10), thickness=2, circle_radius=4),
-                              mp_drawing.DrawingSpec(color=(80, 44, 121), thickness=2, circle_radius=2)
-                              )
+    # mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
+    #                           mp_drawing.DrawingSpec(color=(80, 22, 10), thickness=2, circle_radius=4),
+    #                           mp_drawing.DrawingSpec(color=(80, 44, 121), thickness=2, circle_radius=2)
+    #                           )
     # Draw left hand connections
     mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
                               mp_drawing.DrawingSpec(color=(121, 22, 76), thickness=2, circle_radius=4),
@@ -141,19 +142,19 @@ def draw_styled_landmarks(image, results):
                               )
 
 
-def extract_keypoints(results):
+def extract_hand_keypoints(results):
     """
     extract landmark points from pose & hand MediaPipe model
 
     :param results: frames after processed by MediaPipe model
     :return: cancatenated numpy array
     """
-    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
-    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
+    # pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
+    # face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
     lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
     rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
-    return np.concatenate([pose, face, lh, rh])
-
+    # return np.concatenate([pose, face, lh, rh])
+    return np.concatenate([lh, rh])
 
 def navigation_recognition(results, plocX, plocY):
     """
@@ -186,7 +187,7 @@ def navigation_recognition(results, plocX, plocY):
         scaledY = scaling(y1, 1, 0, hScr, 0)
 
         if calc_euclidean_distance(scaledX, scaledY, plocX, plocY) > threshold:
-            # pyautogui.moveTo(wScr - scaledX, scaledY)
+            pyautogui.moveTo(wScr - scaledX, scaledY)
             returnX = scaledX
             returnY = scaledY
 
@@ -197,22 +198,29 @@ def navigation_recognition(results, plocX, plocY):
 
 def action_recognition(results, model, threshold):
 
-    keypoints = extract_keypoints(results)
+    keypoints = extract_hand_keypoints(results)
     sequence.append(keypoints)
     current_sequence = sequence[-30:]
 
     if len(current_sequence) == 30:
         res = model.predict(np.expand_dims(current_sequence, axis=0))[0]
+        # print(actions[np.argmax(res)])
         if res[np.argmax(res)] > threshold:
+            # print("returning it!")
             return actions[np.argmax(res)]
 
+    return ""
+
+def walk_recognition(results):
+    if results.left_hand_landmarks is not None:
+        return "move"
     return ""
 
 
 def recognitionLoop(keyStateData):
 
     # loading recognition model
-    model = keras.models.load_model("action.h5")
+    model = keras.models.load_model("hand_model.h5")
 
     cap = cv2.VideoCapture(0)
     # VideoCapture(0), 0 means the default camera for our PC/laptop
@@ -239,52 +247,27 @@ def recognitionLoop(keyStateData):
             ret, frame = cap.read()
 
             image, results = mediapipe_detection(frame, holistic)
+            draw_hand_landmarks(image, results)
 
-            # zones, plocX, plocY = navigation_recognition(results, plocX, plocY)
-            #
-            # print(zones)
-            # if not (zones == oldZones):
-            #     if len(zones) >0:
-            #         print("New Data")
-            #         for item in zones:
-            #             if item == "left":
-            #                 tmpKeyData["pan_left"] = "continuous"
-            #             if item == "right":
-            #                 tmpKeyData["pan_right"] = "continuous"
-            #             if item == "up":
-            #                 tmpKeyData["pan_up"] = "continuous"
-            #             if item == "down":
-            #                 tmpKeyData["pan_down"] = "continuous"
-            #             if item == "neutral":
-            #                 # tmpKeyData["forward"] = "continuous"
-            #                 pass
-            #
-            #     else:
-            #         print("Stop Data")
-            #         tmpKeyData["pan_left"] = False
-            #         tmpKeyData["pan_right"] = False
-            #         tmpKeyData["pan_up"] = False
-            #         tmpKeyData["pan_down"] = False
-            #         # tmpKeyData["forward"] = False
-            #
-            #     keyStateData.put(tmpKeyData)
-            #     oldZones = zones
+            zones, plocX, plocY = navigation_recognition(results, plocX, plocY)
 
-            activity = action_recognition(results, model, threshold)
-            if not (activity == oldActivity):
-                if len(activity) > 0:
+            if not (zones == oldZones):
+                if len(zones) >0:
                     print("New Data")
-                    if activity == "pan left":
-                        tmpKeyData["pan_left"] = "continuous"
-                    if activity == "pan right":
-                        tmpKeyData["pan_right"] = "continuous"
-                    if activity == "pan up":
-                        tmpKeyData["pan_up"] = "continuous"
-                    if activity == "pan down":
-                        tmpKeyData["pan_down"] = "continuous"
-                    if activity == "move":
-                        tmpKeyData["forward"] = "continuous"
-                        pass
+                    for item in zones:
+                        if item == "left":
+                            tmpKeyData["pan_left"] = "continuous"
+                        if item == "right":
+                            tmpKeyData["pan_right"] = "continuous"
+                        if item == "up":
+                            tmpKeyData["pan_up"] = "continuous"
+                        if item == "down":
+                            tmpKeyData["pan_down"] = "continuous"
+                        if item == "neutral":
+                            tmpKeyData["pan_left"] = False
+                            tmpKeyData["pan_right"] = False
+                            tmpKeyData["pan_up"] = False
+                            tmpKeyData["pan_down"] = False
 
                 else:
                     print("Stop Data")
@@ -292,16 +275,48 @@ def recognitionLoop(keyStateData):
                     tmpKeyData["pan_right"] = False
                     tmpKeyData["pan_up"] = False
                     tmpKeyData["pan_down"] = False
+                    # tmpKeyData["forward"] = False
+
+                # keyStateData.put(tmpKeyData)
+                oldZones = zones
+
+            # activity = action_recognition(results, model, recognition_threshold)
+            activity = walk_recognition(results)
+            if not (activity == oldActivity):
+                if len(activity) > 0:
+                    # print("New Data")
+                    if activity == "move":
+                        tmpKeyData["forward"] = "continuous"
+                        # print("Moving")
+                    # if activity == "select":
+                    #     tmpKeyData["click"] = "single"
+                    #     print("clicked")
+                    # if activity == "click":
+                    #     tmpKeyData["click"] = "single"
+                    # if activity == "flip":
+                    #     tmpKeyData["click"] = "single"
+                    # if activity == "grab":
+                    #     tmpKeyData["click"] = "single"
+                        pass
+
+                else:
+                    print("Stop Data")
+                    # tmpKeyData["pan_left"] = False
+                    # tmpKeyData["pan_right"] = False
+                    # tmpKeyData["pan_up"] = False
+                    # tmpKeyData["pan_down"] = False
                     tmpKeyData["forward"] = False
 
-                keyStateData.put(tmpKeyData)
+                # keyStateData.put(tmpKeyData)
                 oldActivity = activity
+
+            keyStateData.put(tmpKeyData)
 
 
             cv2.imshow('Webcam Feed w. hand & pose detection', cv2.flip(image, 1))
             # name the frame, and render the image that we just processed (and flip it to mirror us)
 
-            if cv2.waitKey(10) & 0xFF == ord('q'):
+            if cv2.waitKey(10) & 0xFF == ord('.'):
                 # we can hit "q" to exit out the frame
                 break
 

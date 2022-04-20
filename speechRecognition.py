@@ -204,7 +204,7 @@ def listen_print_loop(responses, stream, keyStateData):
 
         if result.is_final:
 
-            sys.stdout.write(GREEN)
+            # sys.stdout.write(GREEN)
 
             if re.search(r"\b(open|yes|sure|close|on|off)\b", transcript, re.I):
                 tmpKeyData["click"] = "single"
@@ -234,9 +234,9 @@ def listen_print_loop(responses, stream, keyStateData):
             keyStateData.put(tmpKeyData)   # for communication between processes.
 
         else:
-            sys.stdout.write(RED)
-            sys.stdout.write("\033[K")
-            sys.stdout.write(str(corrected_time) + ": " + transcript + "\r")
+            # sys.stdout.write(RED)
+            # sys.stdout.write("\033[K")
+            # sys.stdout.write(str(corrected_time) + ": " + transcript + "\r")
 
             stream.last_transcript_was_final = False
 
