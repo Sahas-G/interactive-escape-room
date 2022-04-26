@@ -215,7 +215,7 @@ def walk_recognition(results):
 
     if results.left_hand_landmarks is not None:
 
-        thumb_finger_tip = results.lewft_hand_landmarks.landmark[4]
+        thumb_finger_tip = results.left_hand_landmarks.landmark[4]
         index_finger_tip = results.left_hand_landmarks.landmark[8]
         middle_finger_tip = results.left_hand_landmarks.landmark[12]
         ring_finger_tip = results.left_hand_landmarks.landmark[16]

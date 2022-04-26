@@ -206,7 +206,7 @@ def listen_print_loop(responses, stream, keyStateData):
 
             # sys.stdout.write(GREEN)
 
-            if re.search(r"\b(open|on|click|select|turn)\b", transcript, re.I):
+            if re.search(r"\b(open|on|click|select|turn|rotate)\b", transcript, re.I):
                 tmpKeyData["click"] = "single"
             elif "inventory" in transcript:
                 tmpKeyData["inventory"] = "single"
