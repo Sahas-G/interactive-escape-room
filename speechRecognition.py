@@ -206,11 +206,11 @@ def listen_print_loop(responses, stream, keyStateData):
 
             # sys.stdout.write(GREEN)
 
-            if re.search(r"\b(open|yes|sure|close|on|off)\b", transcript, re.I):
+            if re.search(r"\b(open|on|click|select|turn)\b", transcript, re.I):
                 tmpKeyData["click"] = "single"
             elif "inventory" in transcript:
                 tmpKeyData["inventory"] = "single"
-            elif re.search(r"\b(back)\b", transcript, re.I):
+            elif re.search(r"\b(back|close)\b", transcript, re.I):
                 tmpKeyData["rClick"] = "single"
             elif re.search(r"\b(diary)\b", transcript, re.I):
                 tmpKeyData["diary"] = "single"

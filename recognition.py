@@ -212,8 +212,17 @@ def action_recognition(results, model, threshold):
     return ""
 
 def walk_recognition(results):
+
     if results.left_hand_landmarks is not None:
-        return "move"
+
+        thumb_finger_tip = results.lewft_hand_landmarks.landmark[4]
+        index_finger_tip = results.left_hand_landmarks.landmark[8]
+        middle_finger_tip = results.left_hand_landmarks.landmark[12]
+        ring_finger_tip = results.left_hand_landmarks.landmark[16]
+        pinky_finger_tip = results.left_hand_landmarks.landmark[20]
+
+        if thumb_finger_tip and index_finger_tip and middle_finger_tip and ring_finger_tip and pinky_finger_tip is not None:
+            return "move"
     return ""
 
 
