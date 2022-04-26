@@ -18,7 +18,8 @@ class keyboardController:
         "enter": 'enter',
         "click": 'q',
         "rClick": 'z',
-        "focus": 'g'
+        "focus": 'g',
+        "run": 'shiftleft'
     }
 
     # continuous, single, false
@@ -39,7 +40,8 @@ class keyboardController:
         "enter": False,
         "click": False,
         "rClick": False,
-        "focus": False
+        "focus": False,
+        "run": False
     }
 
     currentKeyState = {
@@ -58,7 +60,8 @@ class keyboardController:
         "enter": False,
         "click": False,
         "rClick": False,
-        "focus": False
+        "focus": False,
+        "run": False
     }
 
     navStates = ['forward', 'backward', 'left', 'right']

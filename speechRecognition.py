@@ -166,7 +166,8 @@ def listen_print_loop(responses, stream, keyStateData):
             "enter": None,
             "click": None,
             "rClick": None,
-            "focus": None
+            "focus": None,
+            "run": None
         }
 
         if get_current_time() - stream.start_time > STREAMING_LIMIT:
@@ -218,6 +219,11 @@ def listen_print_loop(responses, stream, keyStateData):
                 tmpKeyData["flashlight"] = "single"
             elif re.search(r"\b(focus)\b", transcript, re.I):
                 tmpKeyData["focus"] = "single"
+            elif "high speed mode" in transcript:
+                tmpKeyData["run"] = "continuous"
+            elif "low speed mode" in transcript:
+                tmpKeyData["run"] = False
+
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
 
             stream.is_final_end_time = stream.result_end_time

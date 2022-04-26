@@ -45,7 +45,8 @@ Keys = {
             "enter": None,
             "click": None,
             "rClick": None,
-            "focus": None
+            "focus": None,
+            "run": None
         }
 
 actions = np.array(['move', 'select', 'click', 'flip', 'grab'])
