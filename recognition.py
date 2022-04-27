@@ -30,28 +30,29 @@ hotZones = {
 }
 
 Keys = {
-            "forward": None,
-            "backward": None,
-            "right": None,
-            "left": None,
-            "inventory": None,
-            "diary": None,
-            "flashlight": None,
-            "pause": None,
-            "pan_up": None,
-            "pan_down": None,
-            "pan_right": None,
-            "pan_left": None,
-            "enter": None,
-            "click": None,
-            "rClick": None,
-            "focus": None,
-            "run": None,
-            "look_back": None
-        }
+    "forward": None,
+    "backward": None,
+    "right": None,
+    "left": None,
+    "inventory": None,
+    "diary": None,
+    "flashlight": None,
+    "pause": None,
+    "pan_up": None,
+    "pan_down": None,
+    "pan_right": None,
+    "pan_left": None,
+    "enter": None,
+    "click": None,
+    "rClick": None,
+    "focus": None,
+    "run": None,
+    "look_back": None
+}
 
 actions = np.array(['move', 'select', 'click', 'flip', 'grab'])
 sequence = []
+
 
 def inZones(x, y):
     """
@@ -153,10 +154,14 @@ def extract_hand_keypoints(results):
     """
     # pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
     # face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
+    lh = np.array([[res.x, res.y, res.z] for res in
+                   results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21 * 3)
+    rh = np.array([[res.x, res.y, res.z] for res in
+                   results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(
+        21 * 3)
     # return np.concatenate([pose, face, lh, rh])
     return np.concatenate([lh, rh])
+
 
 def navigation_recognition(results, plocX, plocY):
     """
@@ -199,7 +204,6 @@ def navigation_recognition(results, plocX, plocY):
 
 
 def action_recognition(results, model, threshold):
-
     keypoints = extract_hand_keypoints(results)
     sequence.append(keypoints)
     current_sequence = sequence[-30:]
@@ -213,27 +217,81 @@ def action_recognition(results, model, threshold):
 
     return ""
 
+
+def euclideanDistance(x1, y1, x2, y2):
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+
+def checkAngleState(top, base, bottom):
+    """
+    Return:
+        True -->  Open [Flat]
+        False --> Close [Bent]
+    """
+    a = np.array([top.x, top.y])
+    b = np.array([base.x, base.y])
+    c = np.array([bottom.x, bottom.y])
+
+    radians = np.arctan2(c[1] - b[1], c[0] - b[0]) - np.arctan2(a[1] - b[1], a[0] - b[0])
+    angle = np.abs(radians * 180.0 / np.pi)
+    if angle > 180.0:
+        angle = 360 - angle
+    if angle > 175:
+        # angle is almost straight line, hence open
+        return True
+    else:
+        # angle must be bent
+        return False
+
+
+def checkFingerState(tip, top_mid, bottom_mid, base):
+    """
+    Return:
+        True -->  Open [Flat]
+        False --> Close [Bent]
+    """
+    if checkAngleState(tip, top_mid, bottom_mid) is True and checkAngleState(top_mid, bottom_mid, base) is True:
+        return True
+    else:
+        return False
+
+
 def walk_recognition(results):
+    if results.right_hand_landmarks is not None:
+        index_state = checkFingerState(results.right_hand_landmarks.landmark[8],
+                                       results.right_hand_landmarks.landmark[7],
+                                       results.right_hand_landmarks.landmark[6],
+                                       results.right_hand_landmarks.landmark[5])
+        middle_state = checkFingerState(results.right_hand_landmarks.landmark[12],
+                                        results.right_hand_landmarks.landmark[11],
+                                        results.right_hand_landmarks.landmark[10],
+                                        results.right_hand_landmarks.landmark[9])
+        ring_state = checkFingerState(results.right_hand_landmarks.landmark[16],
+                                      results.right_hand_landmarks.landmark[15],
+                                      results.right_hand_landmarks.landmark[14],
+                                      results.right_hand_landmarks.landmark[13])
+        pinky_state = checkFingerState(results.right_hand_landmarks.landmark[20],
+                                       results.right_hand_landmarks.landmark[19],
+                                       results.right_hand_landmarks.landmark[19],
+                                       results.right_hand_landmarks.landmark[17])
 
-    if results.left_hand_landmarks is not None:
+        for item in [index_state, middle_state, ring_state, pinky_state]:
+            if item is True:
+                return ""
+        return "move"
 
-        thumb_finger_tip = results.left_hand_landmarks.landmark[4]
-        index_finger_tip = results.left_hand_landmarks.landmark[8]
-        middle_finger_tip = results.left_hand_landmarks.landmark[12]
-        ring_finger_tip = results.left_hand_landmarks.landmark[16]
-        pinky_finger_tip = results.left_hand_landmarks.landmark[20]
-
-        if thumb_finger_tip and index_finger_tip and middle_finger_tip and ring_finger_tip and pinky_finger_tip is not None:
-            return "move"
+        # thumb_finger_tip = results.left_hand_landmarks.landmark[4]
+        # index_finger_tip = results.left_hand_landmarks.landmark[8]
+        # middle_finger_tip = results.left_hand_landmarks.landmark[12]
+        # ring_finger_tip = results.left_hand_landmarks.landmark[16]
+        # pinky_finger_tip = results.left_hand_landmarks.landmark[20]
+        #
+        # if thumb_finger_tip and index_finger_tip and middle_finger_tip and ring_finger_tip and pinky_finger_tip is not None:
+        #     return "move"
     return ""
-
-    # Step 1 : Check if each finger is open or bent.
-    #
-    # Step 2: If all fingers are bent or all non-thumb fingers are bent, clasify as fist.
 
 
 def recognitionLoop(keyStateData):
-
     # loading recognition model
     model = keras.models.load_model("hand_model.h5")
 
@@ -267,7 +325,7 @@ def recognitionLoop(keyStateData):
             zones, plocX, plocY = navigation_recognition(results, plocX, plocY)
 
             if not (zones == oldZones):
-                if len(zones) >0:
+                if len(zones) > 0:
                     print("New Data")
                     for item in zones:
                         if item == "left":
@@ -307,15 +365,15 @@ def recognitionLoop(keyStateData):
                     if activity == "move":
                         tmpKeyData["forward"] = "continuous"
                         # print("Moving")
-                    # if activity == "select":
-                    #     tmpKeyData["click"] = "single"
-                    #     print("clicked")
-                    # if activity == "click":
-                    #     tmpKeyData["click"] = "single"
-                    # if activity == "flip":
-                    #     tmpKeyData["click"] = "single"
-                    # if activity == "grab":
-                    #     tmpKeyData["click"] = "single"
+                        # if activity == "select":
+                        #     tmpKeyData["click"] = "single"
+                        #     print("clicked")
+                        # if activity == "click":
+                        #     tmpKeyData["click"] = "single"
+                        # if activity == "flip":
+                        #     tmpKeyData["click"] = "single"
+                        # if activity == "grab":
+                        #     tmpKeyData["click"] = "single"
                         pass
 
                 else:
@@ -330,7 +388,6 @@ def recognitionLoop(keyStateData):
                 oldActivity = activity
 
             keyStateData.put(tmpKeyData)
-
 
             cv2.imshow('Webcam Feed w. hand & pose detection', cv2.flip(image, 1))
             # name the frame, and render the image that we just processed (and flip it to mirror us)
