@@ -167,7 +167,8 @@ def listen_print_loop(responses, stream, keyStateData):
             "click": None,
             "rClick": None,
             "focus": None,
-            "run": None
+            "run": None,
+            "look_back": None
         }
 
         if get_current_time() - stream.start_time > STREAMING_LIMIT:
@@ -207,12 +208,8 @@ def listen_print_loop(responses, stream, keyStateData):
 
             # sys.stdout.write(GREEN)
 
-            if re.search(r"\b(open|on|click|select|turn|rotate)\b", transcript, re.I):
-                tmpKeyData["click"] = "single"
-            elif "inventory" in transcript:
+            if "inventory" in transcript:
                 tmpKeyData["inventory"] = "single"
-            elif re.search(r"\b(back|close)\b", transcript, re.I):
-                tmpKeyData["rClick"] = "single"
             elif re.search(r"\b(diary)\b", transcript, re.I):
                 tmpKeyData["diary"] = "single"
             elif re.search(r"\b(flashlight)\b", transcript, re.I):
@@ -223,6 +220,23 @@ def listen_print_loop(responses, stream, keyStateData):
                 tmpKeyData["run"] = "continuous"
             elif "low speed mode" in transcript:
                 tmpKeyData["run"] = False
+            elif "look back" in transcript or "turn back" in transcript:
+                tmpKeyData["look_back"] = "single"
+            elif re.search(r"\b(back|close)\b", transcript, re.I):
+                tmpKeyData["rClick"] = "single"
+            elif re.search(r"\b(open|on|click|select|turn|rotate)\b", transcript, re.I):
+                tmpKeyData["click"] = "single"
+            elif re.search(r"\b(stop)\b", transcript, re.I):
+                tmpKeyData["forward"] = False
+                tmpKeyData["backward"] = False
+                tmpKeyData["right"] = False
+                tmpKeyData["left"] = False
+                tmpKeyData["pan_up"] = False
+                tmpKeyData["pan_down"] = False
+                tmpKeyData["pan_right"] = False
+                tmpKeyData["pan_left"] = False
+                tmpKeyData["run"] = False
+
 
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
 

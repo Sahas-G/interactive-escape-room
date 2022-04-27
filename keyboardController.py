@@ -19,7 +19,8 @@ class keyboardController:
         "click": 'q',
         "rClick": 'z',
         "focus": 'g',
-        "run": 'shiftleft'
+        "run": 'shiftleft',
+        "look_back": 'k'
     }
 
     # continuous, single, false
@@ -41,7 +42,8 @@ class keyboardController:
         "click": False,
         "rClick": False,
         "focus": False,
-        "run": False
+        "run": False,
+        "look_back": False
     }
 
     currentKeyState = {
@@ -61,7 +63,8 @@ class keyboardController:
         "click": False,
         "rClick": False,
         "focus": False,
-        "run": False
+        "run": False,
+        "look_back": False
     }
 
     navStates = ['forward', 'backward', 'left', 'right']
