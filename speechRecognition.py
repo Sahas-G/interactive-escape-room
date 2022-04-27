@@ -222,6 +222,17 @@ def listen_print_loop(responses, stream, keyStateData):
                 tmpKeyData["run"] = False
             elif "look back" in transcript or "turn back" in transcript:
                 tmpKeyData["look_back"] = "single"
+            elif "step back" in transcript:
+                tmpKeyData["forward"] = False
+                tmpKeyData["backward"] = 11
+            elif "right" in transcript:
+                tmpKeyData["forward"] = False
+                tmpKeyData["backward"] = False
+                tmpKeyData["right"] = 4
+            elif "left" in transcript:
+                tmpKeyData["forward"] = False
+                tmpKeyData["backward"] = False
+                tmpKeyData["left"] = 4
             elif re.search(r"\b(back|close)\b", transcript, re.I):
                 tmpKeyData["rClick"] = "single"
             elif re.search(r"\b(open|on|click|select|turn|rotate)\b", transcript, re.I):

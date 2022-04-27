@@ -227,6 +227,10 @@ def walk_recognition(results):
             return "move"
     return ""
 
+    # Step 1 : Check if each finger is open or bent.
+    #
+    # Step 2: If all fingers are bent or all non-thumb fingers are bent, clasify as fist.
+
 
 def recognitionLoop(keyStateData):
 
@@ -279,6 +283,10 @@ def recognitionLoop(keyStateData):
                             tmpKeyData["pan_right"] = False
                             tmpKeyData["pan_up"] = False
                             tmpKeyData["pan_down"] = False
+
+                        for pan in ["pan_left", "pan_right", "pan_up", "pan_down"]:
+                            if tmpKeyData[pan] is None:
+                                tmpKeyData[pan] = False
 
                 else:
                     print("Stop Data")

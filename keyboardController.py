@@ -100,6 +100,13 @@ class keyboardController:
                 print("Executed: %s" % action)
             elif self.currentKeyState[action] == "continuous":
                 self.startKey(action)
+            elif type(self.currentKeyState[action]) == int:
+                if self.currentKeyState[action] == 1:
+                    self.stopKey(action)
+                else:
+                    self.currentKeyState[action] -= 1
+                    self.startKey(action)
+
 
 
     """
@@ -113,6 +120,7 @@ class keyboardController:
 
     def stopKey(self, action):
         pyautogui.keyUp(self.keyMap[action])
+        self.currentKeyState[action] = False
 
 
     def pressKey(self, action):
