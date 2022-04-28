@@ -12,11 +12,10 @@ mp_drawing = mp.solutions.drawing_utils
 # import mediapipe holistic model
 mp_holistic = mp.solutions.holistic
 
-wCam, hCam = 640, 480
 frameReduction = 100
 smoothingThreshold = 5
 wScr, hScr = pyautogui.size()  # Outputs the high and width of the screen
-# plocX, plocY = 0, 0
+wCam, hCam = wScr, hScr
 threshold = 20
 recognition_threshold = 0.7
 
@@ -290,12 +289,24 @@ def walk_recognition(results):
         #     return "move"
     return ""
 
+def prob_viz(image, activity, zones):
+
+    output_frame = image.copy()
+    if len(zones) > 0:
+        for index, item in enumerate(zones):
+            cv2.putText(output_frame, item, (0, 100 + index * 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    if len(activity) > 0:
+        cv2.putText(output_frame, activity, (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+    return output_frame
+
 
 def recognitionLoop(keyStateData):
     # loading recognition model
     model = keras.models.load_model("hand_model.h5")
 
     cap = cv2.VideoCapture(0)
+    # to access external webcam, disable interal webcams in device manager and then the external will become the default "0"
     # VideoCapture(0), 0 means the default camera for our PC/laptop
     # if we have several cameras, the number refers to USB port number.
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, wCam)
@@ -321,6 +332,7 @@ def recognitionLoop(keyStateData):
 
             image, results = mediapipe_detection(frame, holistic)
             draw_hand_landmarks(image, results)
+            image = cv2.flip(image, 1)
 
             zones, plocX, plocY = navigation_recognition(results, plocX, plocY)
 
@@ -361,9 +373,9 @@ def recognitionLoop(keyStateData):
             activity = walk_recognition(results)
             if not (activity == oldActivity):
                 if len(activity) > 0:
-                    # print("New Data")
                     if activity == "move":
                         tmpKeyData["forward"] = "continuous"
+
                         # print("Moving")
                         # if activity == "select":
                         #     tmpKeyData["click"] = "single"
@@ -389,7 +401,7 @@ def recognitionLoop(keyStateData):
 
             keyStateData.put(tmpKeyData)
 
-            cv2.imshow('Webcam Feed w. hand & pose detection', cv2.flip(image, 1))
+            cv2.imshow("feed", prob_viz(image, oldActivity, oldZones))
             # name the frame, and render the image that we just processed (and flip it to mirror us)
 
             if cv2.waitKey(10) & 0xFF == ord('.'):
