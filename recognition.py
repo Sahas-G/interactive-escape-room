@@ -49,7 +49,7 @@ Keys = {
     "look_back": None
 }
 
-actions = np.array(['move', 'select', 'click', 'flip', 'grab'])
+actions = np.array(['rotate','switch', 'grab', 'input'])
 sequence = []
 
 
@@ -303,7 +303,7 @@ def prob_viz(image, activity, zones):
 
 def recognitionLoop(keyStateData):
     # loading recognition model
-    model = keras.models.load_model("hand_model.h5")
+    model = keras.models.load_model("model_rh_only.h5")
 
     cap = cv2.VideoCapture(0)
     # to access external webcam, disable interal webcams in device manager and then the external will become the default "0"
