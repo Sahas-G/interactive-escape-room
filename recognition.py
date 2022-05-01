@@ -22,15 +22,20 @@ wCam, hCam = wScr, hScr
 threshold = 20
 upperx = 0
 lowerx = 0
+lowery = 0
+uppery = 0
+paddinglr = 100 # padding for the facebox right and left
+paddingud = 50 # padding for face box up and down
+
 
 # Defined as top left to bottom right of the zone
-hotZones = {
-    "left": [(0, 0), (wScr / 3, hScr)],
-    "right": [(wScr * 2 / 3, 0), (wScr, hScr)],
-    "up": [(0, 0), (wScr, hScr / 3)],
-    "down": [(0, hScr * 3 / 5), (wScr, hScr)],
-    "neutral": [(wScr / 3, hScr / 3), (wScr * 2 / 3, hScr * 2 / 3)]
-}
+# hotZones = {
+#     "left": [(0, 0), (wScr / 3, hScr)],
+#     "right": [(wScr * 2 / 3, 0), (wScr, hScr)],
+#     "up": [(0, 0), (wScr, hScr / 3)],
+#     "down": [(0, hScr * 3 / 5), (wScr, hScr)],
+#     "neutral": [(wScr / 3, hScr / 3), (wScr * 2 / 3, hScr * 2 / 3)]
+# }
 
 Keys = {
     "forward": None,
@@ -61,22 +66,22 @@ def face_box(face_results):
     """
     face results is the result from mp.face_detection
     """
-
     if face_results.detections:
-
         for face_no, face in enumerate(face_results.detections):
             face_data = face.location_data
             xmin = face_data.relative_bounding_box.xmin
             width = face_data.relative_bounding_box.width
-            # ymin = face_data.relative_bounding_box.ymin
-            # height = face_data.relative_bounding_box.height
+            ymin = face_data.relative_bounding_box.ymin
+            height = face_data.relative_bounding_box.height
             xmax = xmin + width
-            # ymax = ymin + height
-            scaled_xmin = scaling(xmin, 1, 0, wScr, 0)
-            scaled_xmax = scaling(xmax, 1, 0, wScr, 0)
+            ymax = ymin + height
+            scaled_xmin = scaling(xmin, 1, 0, wScr, 0) - paddinglr
+            scaled_xmax = scaling(xmax, 1, 0, wScr, 0) + paddinglr
+            scaled_ymin = scaling(ymin, 1, 0, hScr, 0) - paddingud
+            scaled_ymax = scaling(ymax, 1, 0, hScr, 0) + paddingud * 2
+            return scaled_xmin, scaled_xmax, scaled_ymin, scaled_ymax
 
-            return scaled_xmin, scaled_xmax
-    return ""
+    return 0, 0, 0, 0
 
 
 # def inZones(x, y):
@@ -97,7 +102,7 @@ def face_box(face_results):
 #                 zoneList.append(zone_name)
 #     return zoneList
 
-def inZones(lowerx, upperx, x, y):
+def inZones(lowerx, upperx, lowery, uppery,  x, y):
     """
     check if the current mouse position is in a hot zone
 
@@ -107,13 +112,17 @@ def inZones(lowerx, upperx, x, y):
     """
 
     zoneList = []
+
+    if y < lowery:
+        zoneList.append("up")
+    if y > uppery:
+        zoneList.append("down")
     if x > upperx:
         zoneList.append("right")
-        # print("x: ", str(x))
-        # print("upperx: ", str(upperx))
-    elif x < lowerx:
+    if x < lowerx:
         zoneList.append("left")
-        # print("lowerx: ", str(lowerx))
+    if (y > lowery and y < uppery and x < upperx and x > lowerx):
+        zoneList = ["neutral"]
 
     return zoneList
 
@@ -209,7 +218,7 @@ def extract_hand_keypoints(results):
     return np.concatenate([lh, rh])
 
 
-def navigation_recognition(results, lowerx, upperx, plocX, plocY):
+def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY):
     """
     detect if there's a right hand in the processed frames (results)
     if there's a right hand, parse all the landmarks and update the mouse position based on index finger location
@@ -244,7 +253,7 @@ def navigation_recognition(results, lowerx, upperx, plocX, plocY):
             returnX = scaledX
             returnY = scaledY
 
-        zoneList = inZones(lowerx, upperx, wScr - scaledX, scaledY)
+        zoneList = inZones(lowerx, upperx, lowery, uppery, wScr - scaledX, scaledY)
 
     return zoneList, returnX, returnY
 
@@ -380,12 +389,18 @@ def recognitionLoop(keyStateData):
 
             image, results = mediapipe_detection(frame, holistic)
             face_results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-            lowerx, upperx = face_box(face_results)
+            lowerx, upperx, lowery, uppery = face_box(face_results)
 
+            # visualize hand landmarks and face detection box
             draw_hand_landmarks(image, results)
+            if face_results:
+                if face_results.detections:
+                    for detection in face_results.detections:
+                        mp_drawing.draw_detection(image, detection)
+
             image = cv2.flip(image, 1)
 
-            zones, plocX, plocY = navigation_recognition(results, lowerx, upperx, plocX, plocY)
+            zones, plocX, plocY = navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY)
 
             if not (zones == oldZones):
                 if len(zones) > 0:
