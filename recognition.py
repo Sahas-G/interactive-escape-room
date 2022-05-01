@@ -11,13 +11,17 @@ from tensorflow import keras
 mp_drawing = mp.solutions.drawing_utils
 # import mediapipe holistic model
 mp_holistic = mp.solutions.holistic
+# import face detection model
+mp_face_detection = mp.solutions.face_detection
+
 
 frameReduction = 100
 smoothingThreshold = 5
 wScr, hScr = pyautogui.size()  # Outputs the high and width of the screen
 wCam, hCam = wScr, hScr
 threshold = 20
-recognition_threshold = 0.7
+upperx = 0
+lowerx = 0
 
 # Defined as top left to bottom right of the zone
 hotZones = {
@@ -51,9 +55,49 @@ Keys = {
 
 actions = np.array(['rotate','switch', 'grab', 'input'])
 sequence = []
+recognition_threshold = 0.7
+
+def face_box(face_results):
+    """
+    face results is the result from mp.face_detection
+    """
+
+    if face_results.detections:
+
+        for face_no, face in enumerate(face_results.detections):
+            face_data = face.location_data
+            xmin = face_data.relative_bounding_box.xmin
+            width = face_data.relative_bounding_box.width
+            # ymin = face_data.relative_bounding_box.ymin
+            # height = face_data.relative_bounding_box.height
+            xmax = xmin + width
+            # ymax = ymin + height
+            scaled_xmin = scaling(xmin, 1, 0, wScr, 0)
+            scaled_xmax = scaling(xmax, 1, 0, wScr, 0)
+
+            return scaled_xmin, scaled_xmax
+    return ""
 
 
-def inZones(x, y):
+# def inZones(x, y):
+#     """
+#     check if the current mouse position is in a hot zone
+#
+#     :param x: x coordinate
+#     :param y: y coordinate
+#     :return: a list of the hot zones that the mouse has been in
+#     """
+#
+#     zoneList = []
+#     for zone_name in hotZones.keys():
+#         # e.g. zone = [(0, 0), (wScr / 3, hScr)]
+#         zone = hotZones[zone_name]
+#         if zone[0][0] <= x < zone[1][0]:
+#             if zone[0][1] <= y < zone[1][1]:
+#                 zoneList.append(zone_name)
+#     return zoneList
+
+def inZones(lowerx, upperx, x, y):
     """
     check if the current mouse position is in a hot zone
 
@@ -61,14 +105,17 @@ def inZones(x, y):
     :param y: y coordinate
     :return: a list of the hot zones that the mouse has been in
     """
-    zoneList = []
-    for zone_name in hotZones.keys():
-        zone = hotZones[zone_name]
-        if zone[0][0] <= x < zone[1][0]:
-            if zone[0][1] <= y < zone[1][1]:
-                zoneList.append(zone_name)
-    return zoneList
 
+    zoneList = []
+    if x > upperx:
+        zoneList.append("right")
+        # print("x: ", str(x))
+        # print("upperx: ", str(upperx))
+    elif x < lowerx:
+        zoneList.append("left")
+        # print("lowerx: ", str(lowerx))
+
+    return zoneList
 
 def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
     """
@@ -162,7 +209,7 @@ def extract_hand_keypoints(results):
     return np.concatenate([lh, rh])
 
 
-def navigation_recognition(results, plocX, plocY):
+def navigation_recognition(results, lowerx, upperx, plocX, plocY):
     """
     detect if there's a right hand in the processed frames (results)
     if there's a right hand, parse all the landmarks and update the mouse position based on index finger location
@@ -197,7 +244,7 @@ def navigation_recognition(results, plocX, plocY):
             returnX = scaledX
             returnY = scaledY
 
-        zoneList = inZones(wScr - scaledX, scaledY)
+        zoneList = inZones(lowerx, upperx, wScr - scaledX, scaledY)
 
     return zoneList, returnX, returnY
 
@@ -209,7 +256,7 @@ def action_recognition(results, model, threshold):
 
     if len(current_sequence) == 30:
         res = model.predict(np.expand_dims(current_sequence, axis=0))[0]
-        # print(actions[np.argmax(res)])
+        print(actions[np.argmax(res)])
         if res[np.argmax(res)] > threshold:
             # print("returning it!")
             return actions[np.argmax(res)]
@@ -315,7 +362,8 @@ def recognitionLoop(keyStateData):
     # initialize empty sequence, used to hold the most recent 30 sequences for action recognition
     sequence = []
 
-    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic, mp_face_detection.FaceDetection(
+            model_selection=1, min_detection_confidence=0.5) as face_detection:
         # increase min_detection_confidence & min_tracking_confidence for better accuracy
 
         # while video capture device is open
@@ -331,10 +379,13 @@ def recognitionLoop(keyStateData):
             ret, frame = cap.read()
 
             image, results = mediapipe_detection(frame, holistic)
+            face_results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            lowerx, upperx = face_box(face_results)
+
             draw_hand_landmarks(image, results)
             image = cv2.flip(image, 1)
 
-            zones, plocX, plocY = navigation_recognition(results, plocX, plocY)
+            zones, plocX, plocY = navigation_recognition(results, lowerx, upperx, plocX, plocY)
 
             if not (zones == oldZones):
                 if len(zones) > 0:
