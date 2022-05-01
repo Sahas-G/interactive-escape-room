@@ -11,23 +11,31 @@ from tensorflow import keras
 mp_drawing = mp.solutions.drawing_utils
 # import mediapipe holistic model
 mp_holistic = mp.solutions.holistic
+# import face detection model
+mp_face_detection = mp.solutions.face_detection
 
-wCam, hCam = 640, 480
+
 frameReduction = 100
 smoothingThreshold = 5
 wScr, hScr = pyautogui.size()  # Outputs the high and width of the screen
-# plocX, plocY = 0, 0
+wCam, hCam = wScr, hScr
 threshold = 20
-recognition_threshold = 0.7
+upperx = 0
+lowerx = 0
+lowery = 0
+uppery = 0
+paddinglr = 100 # padding for the facebox right and left
+paddingud = 50 # padding for face box up and down
+
 
 # Defined as top left to bottom right of the zone
-hotZones = {
-    "left": [(0, 0), (wScr / 3, hScr)],
-    "right": [(wScr * 2 / 3, 0), (wScr, hScr)],
-    "up": [(0, 0), (wScr, hScr / 3)],
-    "down": [(0, hScr * 3 / 5), (wScr, hScr)],
-    "neutral": [(wScr / 3, hScr / 3), (wScr * 2 / 3, hScr * 2 / 3)]
-}
+# hotZones = {
+#     "left": [(0, 0), (wScr / 3, hScr)],
+#     "right": [(wScr * 2 / 3, 0), (wScr, hScr)],
+#     "up": [(0, 0), (wScr, hScr / 3)],
+#     "down": [(0, hScr * 3 / 5), (wScr, hScr)],
+#     "neutral": [(wScr / 3, hScr / 3), (wScr * 2 / 3, hScr * 2 / 3)]
+# }
 
 Keys = {
     "forward": None,
@@ -50,11 +58,51 @@ Keys = {
     "look_back": None
 }
 
-actions = np.array(['move', 'select', 'click', 'flip', 'grab'])
+actions = np.array(['rotate','switch', 'grab', 'input'])
 sequence = []
+recognition_threshold = 0.7
+
+def face_box(face_results):
+    """
+    face results is the result from mp.face_detection
+    """
+    if face_results.detections:
+        for face_no, face in enumerate(face_results.detections):
+            face_data = face.location_data
+            xmin = face_data.relative_bounding_box.xmin
+            width = face_data.relative_bounding_box.width
+            ymin = face_data.relative_bounding_box.ymin
+            height = face_data.relative_bounding_box.height
+            xmax = xmin + width
+            ymax = ymin + height
+            scaled_xmin = scaling(xmin, 1, 0, wScr, 0) - paddinglr
+            scaled_xmax = scaling(xmax, 1, 0, wScr, 0) + paddinglr
+            scaled_ymin = scaling(ymin, 1, 0, hScr, 0) - paddingud
+            scaled_ymax = scaling(ymax, 1, 0, hScr, 0) + paddingud * 2
+            return scaled_xmin, scaled_xmax, scaled_ymin, scaled_ymax
+
+    return 0, 0, 0, 0
 
 
-def inZones(x, y):
+# def inZones(x, y):
+#     """
+#     check if the current mouse position is in a hot zone
+#
+#     :param x: x coordinate
+#     :param y: y coordinate
+#     :return: a list of the hot zones that the mouse has been in
+#     """
+#
+#     zoneList = []
+#     for zone_name in hotZones.keys():
+#         # e.g. zone = [(0, 0), (wScr / 3, hScr)]
+#         zone = hotZones[zone_name]
+#         if zone[0][0] <= x < zone[1][0]:
+#             if zone[0][1] <= y < zone[1][1]:
+#                 zoneList.append(zone_name)
+#     return zoneList
+
+def inZones(lowerx, upperx, lowery, uppery,  x, y):
     """
     check if the current mouse position is in a hot zone
 
@@ -62,14 +110,21 @@ def inZones(x, y):
     :param y: y coordinate
     :return: a list of the hot zones that the mouse has been in
     """
-    zoneList = []
-    for zone_name in hotZones.keys():
-        zone = hotZones[zone_name]
-        if zone[0][0] <= x < zone[1][0]:
-            if zone[0][1] <= y < zone[1][1]:
-                zoneList.append(zone_name)
-    return zoneList
 
+    zoneList = []
+
+    if y < lowery:
+        zoneList.append("up")
+    if y > uppery:
+        zoneList.append("down")
+    if x > upperx:
+        zoneList.append("right")
+    if x < lowerx:
+        zoneList.append("left")
+    if (y > lowery and y < uppery and x < upperx and x > lowerx):
+        zoneList = ["neutral"]
+
+    return zoneList
 
 def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
     """
@@ -163,7 +218,7 @@ def extract_hand_keypoints(results):
     return np.concatenate([lh, rh])
 
 
-def navigation_recognition(results, plocX, plocY):
+def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY):
     """
     detect if there's a right hand in the processed frames (results)
     if there's a right hand, parse all the landmarks and update the mouse position based on index finger location
@@ -198,7 +253,7 @@ def navigation_recognition(results, plocX, plocY):
             returnX = scaledX
             returnY = scaledY
 
-        zoneList = inZones(wScr - scaledX, scaledY)
+        zoneList = inZones(lowerx, upperx, lowery, uppery, wScr - scaledX, scaledY)
 
     return zoneList, returnX, returnY
 
@@ -210,7 +265,7 @@ def action_recognition(results, model, threshold):
 
     if len(current_sequence) == 30:
         res = model.predict(np.expand_dims(current_sequence, axis=0))[0]
-        # print(actions[np.argmax(res)])
+        print(actions[np.argmax(res)])
         if res[np.argmax(res)] > threshold:
             # print("returning it!")
             return actions[np.argmax(res)]
@@ -290,12 +345,24 @@ def walk_recognition(results):
         #     return "move"
     return ""
 
+def prob_viz(image, activity, zones):
+
+    output_frame = image.copy()
+    if len(zones) > 0:
+        for index, item in enumerate(zones):
+            cv2.putText(output_frame, item, (0, 100 + index * 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    if len(activity) > 0:
+        cv2.putText(output_frame, activity, (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+    return output_frame
+
 
 def recognitionLoop(keyStateData):
     # loading recognition model
-    model = keras.models.load_model("hand_model.h5")
+    model = keras.models.load_model("model_rh_only.h5")
 
     cap = cv2.VideoCapture(0)
+    # to access external webcam, disable interal webcams in device manager and then the external will become the default "0"
     # VideoCapture(0), 0 means the default camera for our PC/laptop
     # if we have several cameras, the number refers to USB port number.
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, wCam)
@@ -304,7 +371,8 @@ def recognitionLoop(keyStateData):
     # initialize empty sequence, used to hold the most recent 30 sequences for action recognition
     sequence = []
 
-    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic, mp_face_detection.FaceDetection(
+            model_selection=1, min_detection_confidence=0.5) as face_detection:
         # increase min_detection_confidence & min_tracking_confidence for better accuracy
 
         # while video capture device is open
@@ -320,9 +388,19 @@ def recognitionLoop(keyStateData):
             ret, frame = cap.read()
 
             image, results = mediapipe_detection(frame, holistic)
-            draw_hand_landmarks(image, results)
+            face_results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            lowerx, upperx, lowery, uppery = face_box(face_results)
 
-            zones, plocX, plocY = navigation_recognition(results, plocX, plocY)
+            # visualize hand landmarks and face detection box
+            draw_hand_landmarks(image, results)
+            if face_results:
+                if face_results.detections:
+                    for detection in face_results.detections:
+                        mp_drawing.draw_detection(image, detection)
+
+            image = cv2.flip(image, 1)
+
+            zones, plocX, plocY = navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY)
 
             if not (zones == oldZones):
                 if len(zones) > 0:
@@ -361,9 +439,9 @@ def recognitionLoop(keyStateData):
             activity = walk_recognition(results)
             if not (activity == oldActivity):
                 if len(activity) > 0:
-                    # print("New Data")
                     if activity == "move":
                         tmpKeyData["forward"] = "continuous"
+
                         # print("Moving")
                         # if activity == "select":
                         #     tmpKeyData["click"] = "single"
@@ -389,7 +467,7 @@ def recognitionLoop(keyStateData):
 
             keyStateData.put(tmpKeyData)
 
-            cv2.imshow('Webcam Feed w. hand & pose detection', cv2.flip(image, 1))
+            cv2.imshow("feed", prob_viz(image, oldActivity, oldZones))
             # name the frame, and render the image that we just processed (and flip it to mirror us)
 
             if cv2.waitKey(10) & 0xFF == ord('.'):
