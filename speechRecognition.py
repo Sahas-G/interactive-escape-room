@@ -5,7 +5,8 @@ import time
 from google.cloud import speech
 import pyaudio
 from six.moves import queue
-# import pyautogui
+import tkinter as tk
+from PIL import ImageTk, Image
 
 import os
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="./room-escape-speech-58a8764cc576.json"
@@ -148,6 +149,7 @@ def listen_print_loop(responses, stream, keyStateData):
     the next result to overwrite it, until the response is a final one. For the
     final one, print a newline to preserve the finalized transcription.
     """
+    overlay = None
 
     for response in responses:
         tmpKeyData = {
@@ -204,6 +206,8 @@ def listen_print_loop(responses, stream, keyStateData):
         # Display interim results, but with a carriage return at the end of the
         # line, so subsequent lines will overwrite them.
 
+
+
         if result.is_final:
 
             # sys.stdout.write(GREEN)
@@ -247,6 +251,10 @@ def listen_print_loop(responses, stream, keyStateData):
                 tmpKeyData["pan_right"] = False
                 tmpKeyData["pan_left"] = False
                 tmpKeyData["run"] = False
+            elif re.search(r"\b(help)\b", transcript, re.I):
+
+                overlay = Overlay()
+                overlay.show()
 
 
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
@@ -329,9 +337,26 @@ def mainSpeechRecognition(keyStateData):
                 sys.stdout.write("\n")
             stream.new_stream = True
 
+class Overlay:
+    def __init__(self):
+        title_font = ("Helvetica", 20)
+        font = ("Helvetica", 14)
+        self.root = tk.Tk()
+        self.root.title("Virtual Room Escape")
+        self.root.geometry('1000x800+100+100')
+
+        image1 = Image.open('./instruction.png')
+        test = ImageTk.PhotoImage(image1)
+        label1 = tk.Label(image=test)
+        label1.image = test
+        label1.place(x=0, y =0)
+
+    def show(self):
+        self.root.after(6000, lambda: self.root.destroy())
+        self.root.mainloop()
 
 if __name__ == "__main__":
 
     mainSpeechRecognition()
 
-# [END speech_transcribe_infinite_streaming]
+
