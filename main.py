@@ -71,11 +71,12 @@ class interactionClass:
             socket.send(b"Done")
 
     def gameOverlayProcess(self, gameOverlayState):
-        overlay = Overlay()
         while True:
             if not gameOverlayState.empty():
                 state = gameOverlayState.get()
                 if state == "help on":
+                    overlay = Overlay(gameOverlayState)
+                    print("Start of GUI")
                     overlay.show(gameOverlayState)
 
     def startThreads(self):

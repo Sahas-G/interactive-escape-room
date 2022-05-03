@@ -1,8 +1,10 @@
+import time
 import tkinter as tk
 from PIL import ImageTk, Image
 
+
 class Overlay:
-    def __init__(self):
+    def __init__(self, gameOverlayState):
         title_font = ("Helvetica", 20)
         font = ("Helvetica", 14)
         self.root = tk.Tk()
@@ -15,16 +17,16 @@ class Overlay:
         label1.image = test
         label1.place(x=0, y=0)
 
-    def checkStatus(self, gameOverlayState):
-        state = ""
-        if not gameOverlayState.empty():
-            state = gameOverlayState.get()
-
-        if state == "help off":
-            self.root.destroy()
-        else:
-            self.root.after(1000, self.checkStatus(gameOverlayState))
-
     def show(self, gameOverlayState):
-        self.root.after(1000, self.checkStatus(gameOverlayState))
-        self.root.mainloop()
+        self.root.update()
+
+        while True:
+            state = ""
+            if not gameOverlayState.empty():
+                state = gameOverlayState.get()
+
+            if state == "help off":
+                self.root.destroy()
+                break
+            else:
+                self.root.update()

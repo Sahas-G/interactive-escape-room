@@ -237,6 +237,7 @@ def listen_print_loop(responses, stream, keyStateData, gameOverlayState):
                 tmpKeyData["left"] = 4
             elif re.search(r"\b(back|close)\b", transcript, re.I):
                 tmpKeyData["rClick"] = "single"
+                gameOverlayState.put("help off")
             elif re.search(r"\b(open|on|click|select|turn|rotate)\b", transcript, re.I):
                 tmpKeyData["click"] = "single"
             elif re.search(r"\b(stop)\b", transcript, re.I):
@@ -250,8 +251,9 @@ def listen_print_loop(responses, stream, keyStateData, gameOverlayState):
                 tmpKeyData["pan_left"] = False
                 tmpKeyData["run"] = False
             elif re.search(r"\b(help)\b", transcript, re.I):
+                print("Putting help on in Queue")
                 gameOverlayState.put("help on")
-            elif "exit help" in transcript:
+            elif "go away" in transcript:
                 gameOverlayState.put("help off")
 
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
