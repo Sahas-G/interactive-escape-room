@@ -5,11 +5,11 @@ import time
 from google.cloud import speech
 import pyaudio
 from six.moves import queue
-import tkinter as tk
-from PIL import ImageTk, Image
+
 
 import os
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="./room-escape-speech-58a8764cc576.json"
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./room-escape-speech-58a8764cc576.json"
 
 # Audio recording parameters
 STREAMING_LIMIT = 240000  # 4 minutes
@@ -137,7 +137,7 @@ class ResumableMicrophoneStream:
             yield b"".join(data)
 
 
-def listen_print_loop(responses, stream, keyStateData):
+def listen_print_loop(responses, stream, keyStateData, gameOverlayState):
     """Iterates through server responses and prints them.
     The responses passed is a generator that will block until a response
     is provided by the server.
@@ -199,14 +199,12 @@ def listen_print_loop(responses, stream, keyStateData):
         stream.result_end_time = int((result_seconds * 1000) + (result_micros / 1000))
 
         corrected_time = (
-            stream.result_end_time
-            - stream.bridging_offset
-            + (STREAMING_LIMIT * stream.restart_counter)
+                stream.result_end_time
+                - stream.bridging_offset
+                + (STREAMING_LIMIT * stream.restart_counter)
         )
         # Display interim results, but with a carriage return at the end of the
         # line, so subsequent lines will overwrite them.
-
-
 
         if result.is_final:
 
@@ -252,10 +250,9 @@ def listen_print_loop(responses, stream, keyStateData):
                 tmpKeyData["pan_left"] = False
                 tmpKeyData["run"] = False
             elif re.search(r"\b(help)\b", transcript, re.I):
-
-                overlay = Overlay()
-                overlay.show()
-
+                gameOverlayState.put("help on")
+            elif "exit help" in transcript:
+                gameOverlayState.put("help off")
 
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
 
@@ -270,7 +267,7 @@ def listen_print_loop(responses, stream, keyStateData):
                 stream.closed = True
                 break
 
-            keyStateData.put(tmpKeyData)   # for communication between processes.
+            keyStateData.put(tmpKeyData)  # for communication between processes.
 
         else:
             # sys.stdout.write(RED)
@@ -280,11 +277,11 @@ def listen_print_loop(responses, stream, keyStateData):
             stream.last_transcript_was_final = False
 
 
-def mainSpeechRecognition(keyStateData):
+def mainSpeechRecognition(keyStateData, gameOverlayState):
     """start bidirectional streaming from microphone input to speech API"""
 
     client = speech.SpeechClient(client_options={
-        "api_key" : "AIzaSyCQMg8J2kJ5iO5N7WhAY72Swn1KcIMmzH0"
+        "api_key": "AIzaSyCQMg8J2kJ5iO5N7WhAY72Swn1KcIMmzH0"
     })
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -323,7 +320,7 @@ def mainSpeechRecognition(keyStateData):
             responses = client.streaming_recognize(streaming_config, requests)
 
             # Now, put the transcription responses to use.
-            listen_print_loop(responses, stream, keyStateData)
+            listen_print_loop(responses, stream, keyStateData, gameOverlayState)
 
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
@@ -337,26 +334,6 @@ def mainSpeechRecognition(keyStateData):
                 sys.stdout.write("\n")
             stream.new_stream = True
 
-class Overlay:
-    def __init__(self):
-        title_font = ("Helvetica", 20)
-        font = ("Helvetica", 14)
-        self.root = tk.Tk()
-        self.root.title("Virtual Room Escape")
-        self.root.geometry('1000x800+100+100')
-
-        image1 = Image.open('./instruction.png')
-        test = ImageTk.PhotoImage(image1)
-        label1 = tk.Label(image=test)
-        label1.image = test
-        label1.place(x=0, y =0)
-
-    def show(self):
-        self.root.after(6000, lambda: self.root.destroy())
-        self.root.mainloop()
 
 if __name__ == "__main__":
-
     mainSpeechRecognition()
-
-

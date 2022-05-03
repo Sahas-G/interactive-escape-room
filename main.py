@@ -1,12 +1,14 @@
-import time
-import pyautogui
-from gestures import gestureRecognition
+# import time
+# import pyautogui
+# from gestures import gestureRecognition
+# import gameState
+
 from keyboardController import keyboardController
-import gameState
 import multiprocessing
 from speechRecognition import mainSpeechRecognition
 from recognition import recognitionLoop
 import zmq
+from gameOverlay import Overlay
 
 
 class interactionClass:
@@ -51,9 +53,9 @@ class interactionClass:
                 self.kb.updateKeyData(keyStateData.get())
             self.kb.executeKeys()
 
-    def speechProcess(self, keyStateData):
+    def speechProcess(self, keyStateData, gameOverlayState):
         print("Start of Speech Recognition Process")
-        mainSpeechRecognition(keyStateData)
+        mainSpeechRecognition(keyStateData, gameOverlayState)
 
     def unityCommProcess(self, puzzleStateData):
         context = zmq.Context()
@@ -68,31 +70,40 @@ class interactionClass:
             puzzleStateData.put(message)
             socket.send(b"Done")
 
-            # if not puzzleStateData.empty():
-            #     unityState = puzzleStateData.get()
-            #     print("New Unity State: %s" % unityState)
+    def gameOverlayProcess(self, gameOverlayState):
+        overlay = Overlay()
+        while True:
+            if not gameOverlayState.empty():
+                state = gameOverlayState.get()
+                if state == "help on":
+                    overlay.show(gameOverlayState)
 
     def startThreads(self):
         with multiprocessing.Manager() as manager:
             keyStateData = multiprocessing.Queue()
             puzzleStateData = multiprocessing.Queue()
+            gameOverlayState = multiprocessing.Queue()
 
-            process1 = multiprocessing.Process(target=self.gestureProcess, args=(keyStateData, puzzleStateData))
-            process1.start()
+            # process1 = multiprocessing.Process(target=self.gestureProcess, args=(keyStateData, puzzleStateData))
+            # process1.start()
+            #
+            # process2 = multiprocessing.Process(target=self.keyBoardProcess, args=(keyStateData,))
+            # process2.start()
 
-            process2 = multiprocessing.Process(target=self.keyBoardProcess, args=(keyStateData,))
-            process2.start()
-
-            process3 = multiprocessing.Process(target=self.speechProcess, args=(keyStateData,))
+            process3 = multiprocessing.Process(target=self.speechProcess, args=(keyStateData, gameOverlayState))
             process3.start()
 
-            process4 = multiprocessing.Process(target=self.unityCommProcess, args=(puzzleStateData,))
-            process4.start()
+            # process4 = multiprocessing.Process(target=self.unityCommProcess, args=(puzzleStateData,))
+            # process4.start()
 
-            process2.join()
+            process5 = multiprocessing.Process(target=self.gameOverlayProcess, args=(gameOverlayState,))
+            process5.start()
+
+            # process2.join()
             process3.join()
-            process1.join()
-            process4.join()
+            # process1.join()
+            # process4.join()
+            process5.join()
 
 
 if __name__ == '__main__':
