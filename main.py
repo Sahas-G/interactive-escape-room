@@ -6,6 +6,7 @@ import gameState
 import multiprocessing
 from speechRecognition import mainSpeechRecognition
 from recognition import recognitionLoop
+import zmq
 
 
 class interactionClass:
@@ -29,7 +30,7 @@ class interactionClass:
             "rClick": False
         }
 
-    def gestureProcess(self, keyStateData):
+    def gestureProcess(self, keyStateData, puzzleStateData):
         # self.gestureObj = gestureRecognition()
         # self.gestureObj.prepCamera()
         # self.gestureObj.loadModel()
@@ -39,7 +40,7 @@ class interactionClass:
 
         while True:
             # keyStateData.put(self.gestureObj.findGesture())
-            recognitionLoop(keyStateData)
+            recognitionLoop(keyStateData, puzzleStateData)
 
     def keyBoardProcess(self, keyStateData):
 
@@ -54,11 +55,29 @@ class interactionClass:
         print("Start of Speech Recognition Process")
         mainSpeechRecognition(keyStateData)
 
+    def unityCommProcess(self, puzzleStateData):
+        context = zmq.Context()
+        socket = context.socket(zmq.REP)
+        socket.bind("tcp://*:5555")
+        print("Starting Unity Communicator Process")
+
+        while True:
+            #  Wait for next request from client
+            message = socket.recv()
+            print("Received request: %s" % message)
+            puzzleStateData.put(message)
+            socket.send(b"Done")
+
+            # if not puzzleStateData.empty():
+            #     unityState = puzzleStateData.get()
+            #     print("New Unity State: %s" % unityState)
+
     def startThreads(self):
         with multiprocessing.Manager() as manager:
             keyStateData = multiprocessing.Queue()
+            puzzleStateData = multiprocessing.Queue()
 
-            process1 = multiprocessing.Process(target=self.gestureProcess, args=(keyStateData,))
+            process1 = multiprocessing.Process(target=self.gestureProcess, args=(keyStateData, puzzleStateData))
             process1.start()
 
             process2 = multiprocessing.Process(target=self.keyBoardProcess, args=(keyStateData,))
@@ -67,9 +86,13 @@ class interactionClass:
             process3 = multiprocessing.Process(target=self.speechProcess, args=(keyStateData,))
             process3.start()
 
+            process4 = multiprocessing.Process(target=self.unityCommProcess, args=(puzzleStateData,))
+            process4.start()
+
             process2.join()
             process3.join()
             process1.join()
+            process4.join()
 
 
 if __name__ == '__main__':

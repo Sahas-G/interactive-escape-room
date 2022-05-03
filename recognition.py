@@ -7,13 +7,15 @@ import math
 import tensorflow as tf
 from tensorflow import keras
 
+unityState = "puzzle mode off"
+grabState = False
+
 # draw the detected images to the screen
 mp_drawing = mp.solutions.drawing_utils
 # import mediapipe holistic model
 mp_holistic = mp.solutions.holistic
 # import face detection model
 mp_face_detection = mp.solutions.face_detection
-
 
 frameReduction = 100
 smoothingThreshold = 5
@@ -24,9 +26,8 @@ upperx = 0
 lowerx = 0
 lowery = 0
 uppery = 0
-paddinglr = 100 # padding for the facebox right and left
-paddingud = 50 # padding for face box up and down
-
+paddinglr = 100  # padding for the facebox right and left
+paddingud = 50  # padding for face box up and down
 
 # Defined as top left to bottom right of the zone
 # hotZones = {
@@ -58,9 +59,10 @@ Keys = {
     "look_back": None
 }
 
-actions = np.array(['rotate','switch', 'grab', 'input'])
+actions = np.array(['rotate', 'switch', 'grab', 'input'])
 sequence = []
 recognition_threshold = 0.7
+
 
 def face_box(face_results):
     """
@@ -102,7 +104,7 @@ def face_box(face_results):
 #                 zoneList.append(zone_name)
 #     return zoneList
 
-def inZones(lowerx, upperx, lowery, uppery,  x, y):
+def inZones(lowerx, upperx, lowery, uppery, x, y):
     """
     check if the current mouse position is in a hot zone
 
@@ -125,6 +127,7 @@ def inZones(lowerx, upperx, lowery, uppery,  x, y):
         zoneList = ["neutral"]
 
     return zoneList
+
 
 def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
     """
@@ -248,7 +251,7 @@ def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY
         scaledX = scaling(x1, 1, 0, wScr, 0)
         scaledY = scaling(y1, 1, 0, hScr, 0)
 
-        if calc_euclidean_distance(scaledX, scaledY, plocX, plocY) > threshold:
+        if calc_euclidean_distance(scaledX, scaledY, plocX, plocY) > threshold and unityState == b'puzzle mode on':
             pyautogui.moveTo(wScr - scaledX, scaledY)
             returnX = scaledX
             returnY = scaledY
@@ -345,19 +348,22 @@ def walk_recognition(results):
         #     return "move"
     return ""
 
-def prob_viz(image, activity, zones):
 
+def prob_viz(image, activity, zones):
     output_frame = image.copy()
     if len(zones) > 0:
         for index, item in enumerate(zones):
-            cv2.putText(output_frame, item, (0, 100 + index * 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(output_frame, item, (0, 100 + index * 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
+                        cv2.LINE_AA)
     if len(activity) > 0:
         cv2.putText(output_frame, activity, (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
     return output_frame
 
 
-def recognitionLoop(keyStateData):
+def recognitionLoop(keyStateData, puzzleStateData):
+    global unityState, grabState
+
     # loading recognition model
     model = keras.models.load_model("model_rh_only.h5")
 
@@ -371,7 +377,8 @@ def recognitionLoop(keyStateData):
     # initialize empty sequence, used to hold the most recent 30 sequences for action recognition
     sequence = []
 
-    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic, mp_face_detection.FaceDetection(
+    with mp_holistic.Holistic(min_detection_confidence=0.5,
+                              min_tracking_confidence=0.5) as holistic, mp_face_detection.FaceDetection(
             model_selection=1, min_detection_confidence=0.5) as face_detection:
         # increase min_detection_confidence & min_tracking_confidence for better accuracy
 
@@ -380,6 +387,10 @@ def recognitionLoop(keyStateData):
         oldZones = []
         oldActivity = ''
         while cap.isOpened():
+            if not puzzleStateData.empty():
+                unityState = puzzleStateData.get()
+                print("New Unity State: %s" % unityState)
+
             # capture frame by frame
             # red is a boolean, indicating if a frame is read correctly
 
@@ -404,7 +415,6 @@ def recognitionLoop(keyStateData):
 
             if not (zones == oldZones):
                 if len(zones) > 0:
-                    print("New Data")
                     for item in zones:
                         if item == "left":
                             tmpKeyData["pan_left"] = "continuous"
@@ -425,7 +435,6 @@ def recognitionLoop(keyStateData):
                                 tmpKeyData[pan] = False
 
                 else:
-                    print("Stop Data")
                     tmpKeyData["pan_left"] = False
                     tmpKeyData["pan_right"] = False
                     tmpKeyData["pan_up"] = False
@@ -435,7 +444,6 @@ def recognitionLoop(keyStateData):
                 # keyStateData.put(tmpKeyData)
                 oldZones = zones
 
-            # activity = action_recognition(results, model, recognition_threshold)
             activity = walk_recognition(results)
             if not (activity == oldActivity):
                 if len(activity) > 0:
@@ -455,7 +463,6 @@ def recognitionLoop(keyStateData):
                         pass
 
                 else:
-                    print("Stop Data")
                     # tmpKeyData["pan_left"] = False
                     # tmpKeyData["pan_right"] = False
                     # tmpKeyData["pan_up"] = False
@@ -464,6 +471,20 @@ def recognitionLoop(keyStateData):
 
                 # keyStateData.put(tmpKeyData)
                 oldActivity = activity
+
+            if unityState == b'puzzle mode on':
+                activity = action_recognition(results, model, threshold)
+                if activity in ['rotate', 'switch', 'input']:
+                    tmpKeyData["click"] = 'Single'
+                if activity in ['grab']:
+                    if grabState is False:
+                        grabState = True
+                        pyautogui.mouseDown()
+                    elif grabState is True:
+                        pass
+                if grabState is True and activity not in ['grab']:
+                    grabState = False
+                    pyautogui.mouseUp()
 
             keyStateData.put(tmpKeyData)
 
