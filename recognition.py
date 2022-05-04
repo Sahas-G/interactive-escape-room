@@ -55,7 +55,6 @@ actions = np.array(['rotate', 'switch', 'grab', 'input'])
 sequence = []
 recognition_threshold = 0.7
 
-
 def face_box(face_results):
     """
     face results is the result from mp.face_detection
@@ -192,12 +191,9 @@ def extract_hand_keypoints(results):
     # face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
     lh = np.array([[res.x, res.y, res.z] for res in
                    results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21 * 3)
-    rh = np.array([[res.x, res.y, res.z] for res in
-                   results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(
-        21 * 3)
-    # return np.concatenate([pose, face, lh, rh])
-    return np.concatenate([lh, rh])
+    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21 * 3)
 
+    return np.concatenate([lh, rh])
 
 def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY):
     """
@@ -236,24 +232,32 @@ def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY
             pyautogui.moveTo(wScr - scaledX, scaledY)
             returnX = scaledX
             returnY = scaledY
-
         zoneList = inZones(lowerx, upperx, lowery, uppery, wScr - scaledX, scaledY)
+    else:
+        zoneList.append("neutral")
 
     return zoneList, returnX, returnY
 
 
 def action_recognition(results, model, threshold):
-    keypoints = extract_hand_keypoints(results)
-    sequence.append(keypoints)
-    current_sequence = sequence[-30:]
+    global sequence
+    if results.left_hand_landmarks is not None:
+        keypoints = extract_hand_keypoints(results)
+    # change hand keypoints to just have left hand data (orginally had rh, lh, remember to change back if model is breaking)
+        sequence.append(keypoints)
+        current_sequence = sequence[-30:]
+        # current_sequence = sequence[-120:]
+        # current_sequence = current_sequence[::4]
 
-    if len(current_sequence) == 30:
-        res = model.predict(np.expand_dims(current_sequence, axis=0))[0]
-        print(actions[np.argmax(res)])
-        if res[np.argmax(res)] > threshold:
-            # print("returning it!")
-            return actions[np.argmax(res)]
+        if len(current_sequence) == 30:
+            res = model.predict(np.expand_dims(current_sequence, axis=0))[0]
+            if res[np.argmax(res)] > threshold:
+                print(actions[np.argmax(res)])
+                sequence = []
+                return actions[np.argmax(res)]
 
+            else:
+                return ""
     return ""
 
 
@@ -371,7 +375,7 @@ def recognitionLoop(keyStateData, puzzleStateData):
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, hCam)
 
     # initialize empty sequence, used to hold the most recent 30 sequences for action recognition
-    sequence = []
+    # sequence = []
 
     with mp_holistic.Holistic(min_detection_confidence=0.5,
                               min_tracking_confidence=0.5) as holistic, mp_face_detection.FaceDetection(
@@ -410,7 +414,7 @@ def recognitionLoop(keyStateData, puzzleStateData):
             zones, plocX, plocY = navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY)
 
             if not (zones == oldZones):
-                if len(zones) > 0:
+                if len(zones) > 0 and unityState != b'puzzle mode on':
                     for item in zones:
                         if item == "left":
                             tmpKeyData["pan_left"] = "continuous"
@@ -440,47 +444,50 @@ def recognitionLoop(keyStateData, puzzleStateData):
                 # keyStateData.put(tmpKeyData)
                 oldZones = zones
 
-            activity = walk_recognition(results)
-            if not (activity == oldActivity):
-                if len(activity) > 0:
-                    if activity == "move" and "up" not in oldZones and "down" not in oldZones:
-                        tmpKeyData["forward"] = "continuous"
+            if unityState != b'puzzle mode on':
+                activity = walk_recognition(results)
+                if not (activity == oldActivity):
+                    if len(activity) > 0:
+                        if activity == "move" and "up" not in oldZones and "down" not in oldZones:
+                            tmpKeyData["forward"] = "continuous"
+                        else:
+                            tmpKeyData["forward"] = False
 
-                        # print("Moving")
-                        # if activity == "select":
-                        #     tmpKeyData["click"] = "single"
-                        #     print("clicked")
-                        # if activity == "click":
-                        #     tmpKeyData["click"] = "single"
-                        # if activity == "flip":
-                        #     tmpKeyData["click"] = "single"
-                        # if activity == "grab":
-                        #     tmpKeyData["click"] = "single"
-                        pass
+                            # print("Moving")
+                            # if activity == "select":
+                            #     tmpKeyData["click"] = "single"
+                            #     print("clicked")
+                            # if activity == "click":
+                            #     tmpKeyData["click"] = "single"
+                            # if activity == "flip":
+                            #     tmpKeyData["click"] = "single"
+                            # if activity == "grab":
+                            #     tmpKeyData["click"] = "single"
+                            pass
 
-                else:
-                    # tmpKeyData["pan_left"] = False
-                    # tmpKeyData["pan_right"] = False
-                    # tmpKeyData["pan_up"] = False
-                    # tmpKeyData["pan_down"] = False
-                    tmpKeyData["forward"] = False
+                    else:
+                        # tmpKeyData["pan_left"] = False
+                        # tmpKeyData["pan_right"] = False
+                        # tmpKeyData["pan_up"] = False
+                        # tmpKeyData["pan_down"] = False
+                        tmpKeyData["forward"] = False
 
-                # keyStateData.put(tmpKeyData)
-                oldActivity = activity
+                    # keyStateData.put(tmpKeyData)
+                    oldActivity = activity
 
             if unityState == b'puzzle mode on':
-                activity = action_recognition(results, model, threshold)
-                if activity in ['rotate', 'switch', 'input']:
-                    tmpKeyData["click"] = 'Single'
-                if activity in ['grab']:
+                special = action_recognition(results, model, recognition_threshold)
+                if special in ['rotate', 'switch', 'input']:
+                    tmpKeyData["click"] = 'single'
+                if special in ['grab']:
                     if grabState is False:
                         grabState = True
-                        pyautogui.mouseDown()
+                        tmpKeyData["click"] = 'continuous'
                     elif grabState is True:
                         pass
-                if grabState is True and activity not in ['grab']:
+                if grabState is True and special not in ['grab']:
                     grabState = False
-                    pyautogui.mouseUp()
+                    tmpKeyData["click"] = False
 
             keyStateData.put(tmpKeyData)
 
@@ -493,3 +500,4 @@ def recognitionLoop(keyStateData, puzzleStateData):
 
     cap.release()
     cv2.destroyAllWindows()
+

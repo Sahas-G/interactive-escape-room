@@ -70,6 +70,9 @@ class keyboardController:
     navStates = ['forward', 'backward', 'left', 'right']
     panStates = ['pan_up', 'pan_down', 'pan_left', 'pan_right']
 
+    def __init__(self):
+        pyautogui.FAILSAFE = False
+
     def updateKeyData(self, newKeyData):
         self.oldKeyState = self.currentKeyState.copy()
 
