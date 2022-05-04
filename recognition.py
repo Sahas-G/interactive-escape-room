@@ -443,7 +443,7 @@ def recognitionLoop(keyStateData, puzzleStateData):
             activity = walk_recognition(results)
             if not (activity == oldActivity):
                 if len(activity) > 0:
-                    if activity == "move":
+                    if activity == "move" and "up" not in oldZones and "down" not in oldZones:
                         tmpKeyData["forward"] = "continuous"
 
                         # print("Moving")
