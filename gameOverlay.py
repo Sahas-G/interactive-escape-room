@@ -8,7 +8,6 @@ class Overlay:
         title_font = ("Helvetica", 20)
         font = ("Helvetica", 14)
         self.root = tk.Tk()
-        self.root.title("Virtual Room Escape")
         self.root.geometry('1000x800+100+100')
 
         image1 = Image.open('./instruction.png')
