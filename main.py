@@ -85,25 +85,25 @@ class interactionClass:
             puzzleStateData = multiprocessing.Queue()
             gameOverlayState = multiprocessing.Queue()
 
-            # process1 = multiprocessing.Process(target=self.gestureProcess, args=(keyStateData, puzzleStateData))
-            # process1.start()
-            #
-            # process2 = multiprocessing.Process(target=self.keyBoardProcess, args=(keyStateData,))
-            # process2.start()
+            process1 = multiprocessing.Process(target=self.gestureProcess, args=(keyStateData, puzzleStateData))
+            process1.start()
+
+            process2 = multiprocessing.Process(target=self.keyBoardProcess, args=(keyStateData,))
+            process2.start()
 
             process3 = multiprocessing.Process(target=self.speechProcess, args=(keyStateData, gameOverlayState))
             process3.start()
 
-            # process4 = multiprocessing.Process(target=self.unityCommProcess, args=(puzzleStateData,))
-            # process4.start()
+            process4 = multiprocessing.Process(target=self.unityCommProcess, args=(puzzleStateData,))
+            process4.start()
 
             process5 = multiprocessing.Process(target=self.gameOverlayProcess, args=(gameOverlayState,))
             process5.start()
 
-            # process2.join()
+            process2.join()
             process3.join()
-            # process1.join()
-            # process4.join()
+            process1.join()
+            process4.join()
             process5.join()
 
 
