@@ -29,14 +29,6 @@ uppery = 0
 paddinglr = 100  # padding for the facebox right and left
 paddingud = 50  # padding for face box up and down
 
-# Defined as top left to bottom right of the zone
-# hotZones = {
-#     "left": [(0, 0), (wScr / 3, hScr)],
-#     "right": [(wScr * 2 / 3, 0), (wScr, hScr)],
-#     "up": [(0, 0), (wScr, hScr / 3)],
-#     "down": [(0, hScr * 3 / 5), (wScr, hScr)],
-#     "neutral": [(wScr / 3, hScr / 3), (wScr * 2 / 3, hScr * 2 / 3)]
-# }
 
 Keys = {
     "forward": None,
@@ -77,32 +69,18 @@ def face_box(face_results):
             height = face_data.relative_bounding_box.height
             xmax = xmin + width
             ymax = ymin + height
-            scaled_xmin = scaling(xmin, 1, 0, wScr, 0) - paddinglr
-            scaled_xmax = scaling(xmax, 1, 0, wScr, 0) + paddinglr
+            scaled_xmin = wScr - scaling(xmax, 1, 0, wScr, 0) - paddinglr
+            if scaled_xmin < 0:
+                scaled_xmin = 0
+            scaled_xmax = wScr - scaling(xmin, 1, 0, wScr, 0) + paddinglr
+            if scaled_xmax > wScr:
+                scaled_xmax = wScr
             scaled_ymin = scaling(ymin, 1, 0, hScr, 0) - paddingud
             scaled_ymax = scaling(ymax, 1, 0, hScr, 0) + paddingud * 2
+
             return scaled_xmin, scaled_xmax, scaled_ymin, scaled_ymax
 
     return 0, 0, 0, 0
-
-
-# def inZones(x, y):
-#     """
-#     check if the current mouse position is in a hot zone
-#
-#     :param x: x coordinate
-#     :param y: y coordinate
-#     :return: a list of the hot zones that the mouse has been in
-#     """
-#
-#     zoneList = []
-#     for zone_name in hotZones.keys():
-#         # e.g. zone = [(0, 0), (wScr / 3, hScr)]
-#         zone = hotZones[zone_name]
-#         if zone[0][0] <= x < zone[1][0]:
-#             if zone[0][1] <= y < zone[1][1]:
-#                 zoneList.append(zone_name)
-#     return zoneList
 
 def inZones(lowerx, upperx, lowery, uppery, x, y):
     """
@@ -245,6 +223,9 @@ def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY
         for res in results.right_hand_landmarks.landmark:
             # iterate through all 21 landmarks
             landmarkList.append([res.x, res.y])
+    elif results.left_hand_landmarks is not None:
+        for res in results.left_hand_landmarks.landmark:
+            landmarkList.append([res.x, res.y])
 
     if len(landmarkList) != 0:
         x1, y1 = landmarkList[8]  # the 9th element (index:8) in the landmarkList is always INDEX_FINGER_TIP
@@ -337,27 +318,42 @@ def walk_recognition(results):
             if item is True:
                 return ""
         return "move"
-
-        # thumb_finger_tip = results.left_hand_landmarks.landmark[4]
-        # index_finger_tip = results.left_hand_landmarks.landmark[8]
-        # middle_finger_tip = results.left_hand_landmarks.landmark[12]
-        # ring_finger_tip = results.left_hand_landmarks.landmark[16]
-        # pinky_finger_tip = results.left_hand_landmarks.landmark[20]
-        #
-        # if thumb_finger_tip and index_finger_tip and middle_finger_tip and ring_finger_tip and pinky_finger_tip is not None:
-        #     return "move"
     return ""
 
 
-def prob_viz(image, activity, zones):
-    output_frame = image.copy()
-    if len(zones) > 0:
-        for index, item in enumerate(zones):
-            cv2.putText(output_frame, item, (0, 100 + index * 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
-                        cv2.LINE_AA)
-    if len(activity) > 0:
-        cv2.putText(output_frame, activity, (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+def visualization(image, activity, zones, lowerx, upperx, lowery, uppery):
+    starting_point = (int(lowerx), int(lowery))
+    ending_point = (int(upperx), int(uppery))
 
+    output_frame = image.copy()
+    if lowerx != 0 and upperx != 0 and lowery != 0 and uppery != 0:
+        cv2.rectangle(output_frame, starting_point, ending_point, (0, 255, 0), 3)
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    # navigation text location
+    origin = {
+        "left": (200, int(hScr/2)),
+        "right": ((wScr-200), int(hScr/2)),
+        "up": (int(wScr/2), 200),
+        "down": (int(wScr/2), (hScr - 200)),
+        "neutral":  (int(wScr/2), int(hScr/2))
+    }
+
+
+    # fontScale
+    fontScale = 2
+
+    # Blue color in BGR
+    fontColor = (255, 255, 255)
+
+    # Line thickness of 2 px
+    fontThickness = 3
+    if len(zones) > 0:
+        for index, navigation in enumerate(zones):
+            cv2.putText(output_frame, navigation, origin[navigation], font, fontScale, fontColor, fontThickness, cv2.LINE_AA)
+    if len(activity) > 0:
+        cv2.putText(output_frame, activity, (int(wScr - wScr * 0.3), 200), font, fontScale, (0, 0, 255), fontThickness-1, cv2.LINE_AA)
     return output_frame
 
 
@@ -488,7 +484,7 @@ def recognitionLoop(keyStateData, puzzleStateData):
 
             keyStateData.put(tmpKeyData)
 
-            cv2.imshow("feed", prob_viz(image, oldActivity, oldZones))
+            cv2.imshow("feed", visualization(image, oldActivity, oldZones, lowerx, upperx, lowery, uppery))
             # name the frame, and render the image that we just processed (and flip it to mirror us)
 
             if cv2.waitKey(10) & 0xFF == ord('.'):
