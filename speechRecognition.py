@@ -255,6 +255,10 @@ def listen_print_loop(responses, stream, keyStateData, gameOverlayState):
                 gameOverlayState.put("help on")
             elif "go away" in transcript:
                 gameOverlayState.put("help off")
+            elif "grab" in transcript:
+                tmpKeyData["click"] = "continuous"
+            elif "drop" in transcript:
+                tmpKeyData["click"] = False
 
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
 
