@@ -9,6 +9,7 @@ class Overlay:
         font = ("Helvetica", 14)
         self.root = tk.Tk()
         self.root.geometry('1000x800+100+100')
+        self.root.attributes('-topmost',True)
 
         image1 = Image.open('./instruction.png')
         test = ImageTk.PhotoImage(image1)
