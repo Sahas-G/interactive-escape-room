@@ -53,7 +53,7 @@ Keys = {
 
 actions = np.array(['rotate', 'switch', 'grab', 'input'])
 sequence = []
-recognition_threshold = 0.7
+recognition_threshold = 0.5
 
 def face_box(face_results):
     """
@@ -117,7 +117,6 @@ def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
     :param scaled_min: min value of the desired range
     :return:
     """
-
     original_range = (original_max - original_min)
     scaled_range = (scaled_max - scaled_min)
     scaled_value = (((original_value - original_min) * scaled_range) / original_range) + scaled_min
@@ -452,24 +451,9 @@ def recognitionLoop(keyStateData, puzzleStateData):
                             tmpKeyData["forward"] = "continuous"
                         else:
                             tmpKeyData["forward"] = False
-
-                            # print("Moving")
-                            # if activity == "select":
-                            #     tmpKeyData["click"] = "single"
-                            #     print("clicked")
-                            # if activity == "click":
-                            #     tmpKeyData["click"] = "single"
-                            # if activity == "flip":
-                            #     tmpKeyData["click"] = "single"
-                            # if activity == "grab":
-                            #     tmpKeyData["click"] = "single"
                             pass
 
                     else:
-                        # tmpKeyData["pan_left"] = False
-                        # tmpKeyData["pan_right"] = False
-                        # tmpKeyData["pan_up"] = False
-                        # tmpKeyData["pan_down"] = False
                         tmpKeyData["forward"] = False
 
                     # keyStateData.put(tmpKeyData)
@@ -479,15 +463,15 @@ def recognitionLoop(keyStateData, puzzleStateData):
                 special = action_recognition(results, model, recognition_threshold)
                 if special in ['rotate', 'switch', 'input']:
                     tmpKeyData["click"] = 'single'
-                if special in ['grab']:
-                    if grabState is False:
-                        grabState = True
-                        tmpKeyData["click"] = 'continuous'
-                    elif grabState is True:
-                        pass
-                if grabState is True and special not in ['grab']:
-                    grabState = False
-                    tmpKeyData["click"] = False
+                # if special in ['grab']:
+                #     if grabState is False:
+                #         grabState = True
+                #         tmpKeyData["click"] = 'continuous'
+                #     elif grabState is True:
+                #         pass
+                # if grabState is True and special not in ['grab']:
+                #     grabState = False
+                #     tmpKeyData["click"] = False
 
             keyStateData.put(tmpKeyData)
 
