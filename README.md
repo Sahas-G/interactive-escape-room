@@ -32,5 +32,7 @@ Please follow the below steps to launch this project:
  10. Download and unzip the GameV10.zip file 
  11. Execute the "RoomEscape.exe" file to launch the game.
 
+Note: if you wish run this using an external webcam, you will need to disable the built in webcams in device manager and wait up to 3 minutes after you start running main.py for the opencv video stream window to open up. 
+
 The model that we trained, called "action_recognition_model.h5", is already loaded and used in the system. 
 The "Action Recognition Training Module" is a jupyter notebook that contains what we used to collect, train and evaluate the model. Specific instructions on running and using the module is included in the notebook. 
