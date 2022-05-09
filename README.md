@@ -31,7 +31,5 @@ Please follow the below steps to launch this project:
  6. Connect the external display.
  7. Move the webcam output window to the secondary laptop screen.
  8. Launch the Unity Game (See steps below)
- 
-To prepare the Unity Game App:
  9. Download and unzip the GameV10.zip file 
  10. Execute the "RoomEscape.exe" file to launch the game.
