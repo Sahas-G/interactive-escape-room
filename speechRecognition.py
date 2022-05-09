@@ -6,7 +6,6 @@ from google.cloud import speech
 import pyaudio
 from six.moves import queue
 
-
 import os
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./room-escape-speech-58a8764cc576.json"
@@ -25,7 +24,6 @@ def get_current_time():
     """Return Current Time in MS."""
 
     return int(round(time.time() * 1000))
-
 
 class ResumableMicrophoneStream:
     """Opens a recording stream as a generator yielding the audio chunks."""
