@@ -1,8 +1,3 @@
-# import time
-# import pyautogui
-# from gestures import gestureRecognition
-# import gameState
-
 from keyboardController import keyboardController
 import multiprocessing
 from speechRecognition import mainSpeechRecognition
@@ -12,49 +7,27 @@ from gameOverlay import Overlay
 
 
 class interactionClass:
-    def __init__(self):
-        self.kb = keyboardController()
-        self.keyStateData = {
-            "forward": False,
-            "backward": False,
-            "right": False,
-            "left": False,
-            "inventory": False,
-            "diary": False,
-            "flashlight": False,
-            "pause": False,
-            "pan_up": False,
-            "pan_down": False,
-            "pan_right": False,
-            "pan_left": False,
-            "enter": False,
-            "click": False,
-            "rClick": False
-        }
-
+    """
+    This class has the function definitions for the infinite loops of the 5 processes.
+    Each process function is first initiliased if applicable and then executes on an
+    infinite loop.
+    The startThreads() creates the multiprocesses.
+    """
     def gestureProcess(self, keyStateData, puzzleStateData):
-        # self.gestureObj = gestureRecognition()
-        # self.gestureObj.prepCamera()
-        # self.gestureObj.loadModel()
-        # self.gestureObj.remainingStuff()
-
         print("Starting Gesture Recognition Process")
-
         while True:
-            # keyStateData.put(self.gestureObj.findGesture())
             recognitionLoop(keyStateData, puzzleStateData)
 
     def keyBoardProcess(self, keyStateData):
-
         print("Starting Keyboard Process")
-
+        kb = keyboardController()
         while True:
             while not keyStateData.empty():
-                self.kb.updateKeyData(keyStateData.get())
-            self.kb.executeKeys()
+                kb.updateKeyData(keyStateData.get())
+            kb.executeKeys()
 
     def speechProcess(self, keyStateData, gameOverlayState):
-        print("Start of Speech Recognition Process")
+        print("Starting Speech Recognition Process")
         mainSpeechRecognition(keyStateData, gameOverlayState)
 
     def unityCommProcess(self, puzzleStateData):
@@ -62,9 +35,7 @@ class interactionClass:
         socket = context.socket(zmq.REP)
         socket.bind("tcp://*:5555")
         print("Starting Unity Communicator Process")
-
         while True:
-            #  Wait for next request from client
             message = socket.recv()
             print("Received request: %s" % message)
             puzzleStateData.put(message)
@@ -80,34 +51,51 @@ class interactionClass:
                     overlay.show(gameOverlayState)
 
     def startThreads(self):
-        with multiprocessing.Manager() as manager:
-            keyStateData = multiprocessing.Queue()
-            puzzleStateData = multiprocessing.Queue()
-            gameOverlayState = multiprocessing.Queue()
+        """
+        Function creates the below listed processes:
+        1. gestureProcess --> Gesture Recognition looks for hand poses, 
+                actions, creates dynamic hot zones and directly manipulates 
+                the mouse in puzzle mode.
+        2. keyBoardProcess --> It executes key presses that are added to the
+                keyStateData queue by the other processes. key presses are singular
+                continuous until stopped, or finite such as 20 key presses.
+        3. speechProcess --> Speech Recognition process looks for pre-determined
+                keywords, and takes corresponding actions such as triggering a key
+                press and opening the help overlay.
+        4. unityCommProcess --> This process acts as a server for a websocket
+                connection. The Unity application is modified to send out websocket
+                requests to this specific address to communicate with the python app.
+        5. gameOverlayProceess --> When speech recognition process deetects "help", this,
+                triggers the gameoverlay process, which open a tkinter based GUI window
+                to display the help menu.
+        """
+        keyStateData = multiprocessing.Queue()
+        puzzleStateData = multiprocessing.Queue()
+        gameOverlayState = multiprocessing.Queue()
 
-            process1 = multiprocessing.Process(target=self.gestureProcess, args=(keyStateData, puzzleStateData))
-            process1.start()
+        process1 = multiprocessing.Process(target=self.gestureProcess, args=(keyStateData, puzzleStateData))
+        process1.start()
 
-            process2 = multiprocessing.Process(target=self.keyBoardProcess, args=(keyStateData,))
-            process2.start()
+        process2 = multiprocessing.Process(target=self.keyBoardProcess, args=(keyStateData,))
+        process2.start()
 
-            process3 = multiprocessing.Process(target=self.speechProcess, args=(keyStateData, gameOverlayState))
-            process3.start()
+        process3 = multiprocessing.Process(target=self.speechProcess, args=(keyStateData, gameOverlayState))
+        process3.start()
 
-            process4 = multiprocessing.Process(target=self.unityCommProcess, args=(puzzleStateData,))
-            process4.start()
+        process4 = multiprocessing.Process(target=self.unityCommProcess, args=(puzzleStateData,))
+        process4.start()
 
-            process5 = multiprocessing.Process(target=self.gameOverlayProcess, args=(gameOverlayState,))
-            process5.start()
+        process5 = multiprocessing.Process(target=self.gameOverlayProcess, args=(gameOverlayState,))
+        process5.start()
 
-            process2.join()
-            process3.join()
-            process1.join()
-            process4.join()
-            process5.join()
+        process2.join()
+        process3.join()
+        process1.join()
+        process4.join()
+        process5.join()
 
 
 if __name__ == '__main__':
-    print('Start of Code')
+    print('Start of Multimodal Room Escape Experience')
     interactor = interactionClass()
     interactor.startThreads()

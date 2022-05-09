@@ -105,7 +105,6 @@ def inZones(lowerx, upperx, lowery, uppery, x, y):
 
     return zoneList
 
-
 def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
     """
     scale a value from one range to another
@@ -123,7 +122,6 @@ def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
 
     return scaled_value
 
-
 def calc_euclidean_distance(x1, y1, x2, y2):
     """
     calculate euclidean distance between two points
@@ -136,7 +134,6 @@ def calc_euclidean_distance(x1, y1, x2, y2):
     """
     dist = ((x2 - x1) ** 2 + (y2 - y1) ** 2)
     return math.sqrt(dist)
-
 
 def mediapipe_detection(image, model):
     """
@@ -154,10 +151,8 @@ def mediapipe_detection(image, model):
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # COLOR COVERSION RGB 2 BGR
     return image, results
 
-
 def draw_hand_landmarks(image, results):
     """
-
     :param image: every frame in OpenCV
     :param results: resutls after frame (image) is processed by MediaPipe Holistic Model
     :return: N/A
@@ -178,7 +173,6 @@ def draw_hand_landmarks(image, results):
                               mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
                               )
 
-
 def extract_hand_keypoints(results):
     """
     extract landmark points from pose & hand MediaPipe model
@@ -186,8 +180,6 @@ def extract_hand_keypoints(results):
     :param results: frames after processed by MediaPipe model
     :return: cancatenated numpy array
     """
-    # pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
-    # face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
     lh = np.array([[res.x, res.y, res.z] for res in
                    results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21 * 3)
     rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21 * 3)
@@ -206,7 +198,6 @@ def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY
     FUTURE IMPROVEMENT:
     not just detect hand, but detect specific gestures, e.g. having only one index finger
     """
-
     landmarkList = []
     zoneList = []
     returnX, returnY = plocX, plocY
@@ -237,7 +228,6 @@ def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY
 
     return zoneList, returnX, returnY
 
-
 def action_recognition(results, model, threshold):
     global sequence
     if results.left_hand_landmarks is not None:
@@ -263,7 +253,6 @@ def action_recognition(results, model, threshold):
 def euclideanDistance(x1, y1, x2, y2):
     return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
-
 def checkAngleState(top, base, bottom):
     """
     Return:
@@ -285,7 +274,6 @@ def checkAngleState(top, base, bottom):
         # angle must be bent
         return False
 
-
 def checkFingerState(tip, top_mid, bottom_mid, base):
     """
     Return:
@@ -296,7 +284,6 @@ def checkFingerState(tip, top_mid, bottom_mid, base):
         return True
     else:
         return False
-
 
 def walk_recognition(results):
     if results.right_hand_landmarks is not None:
@@ -322,7 +309,6 @@ def walk_recognition(results):
                 return ""
         return "move"
     return ""
-
 
 def visualization(image, activity, zones, lowerx, upperx, lowery, uppery):
     starting_point = (int(lowerx), int(lowery))
@@ -358,7 +344,6 @@ def visualization(image, activity, zones, lowerx, upperx, lowery, uppery):
     if len(activity) > 0:
         cv2.putText(output_frame, activity, (int(wScr - wScr * 0.3), 200), font, fontScale, (0, 0, 255), fontThickness-1, cv2.LINE_AA)
     return output_frame
-
 
 def recognitionLoop(keyStateData, puzzleStateData):
     global unityState, grabState
@@ -438,9 +423,7 @@ def recognitionLoop(keyStateData, puzzleStateData):
                     tmpKeyData["pan_right"] = False
                     tmpKeyData["pan_up"] = False
                     tmpKeyData["pan_down"] = False
-                    # tmpKeyData["forward"] = False
 
-                # keyStateData.put(tmpKeyData)
                 oldZones = zones
 
             if unityState != b'puzzle mode on':
@@ -456,22 +439,12 @@ def recognitionLoop(keyStateData, puzzleStateData):
                     else:
                         tmpKeyData["forward"] = False
 
-                    # keyStateData.put(tmpKeyData)
                     oldActivity = activity
 
             if unityState == b'puzzle mode on':
                 special = action_recognition(results, model, recognition_threshold)
                 if special in ['rotate', 'switch', 'input']:
                     tmpKeyData["click"] = 'single'
-                # if special in ['grab']:
-                #     if grabState is False:
-                #         grabState = True
-                #         tmpKeyData["click"] = 'continuous'
-                #     elif grabState is True:
-                #         pass
-                # if grabState is True and special not in ['grab']:
-                #     grabState = False
-                #     tmpKeyData["click"] = False
 
             keyStateData.put(tmpKeyData)
 

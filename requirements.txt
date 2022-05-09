@@ -1,5 +1,4 @@
-SpeechRecognition==3.8.1
-PyAutoGUI==0.9.53
+PyAutoGUI
 tensorflow
 numpy
 mediapipe
