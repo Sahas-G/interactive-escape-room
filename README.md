@@ -1,4 +1,4 @@
-## 6.835 Final Project: Interactive Multimodal Room Escape Game
+# 6.835 Final Project: Interactive Multimodal Room Escape Game
 
 ## Contents
 
@@ -13,3 +13,8 @@
 |gameOverlay.py| Contains the tkinter code to create a GUI overlay on top of the game, used as the help menu|
 |instructions.png| image that is displayed in GUI help overlay|
 |requirements.txt| List of all the 3rd party packages that are needed for this project to run|
+|GameV10.zip|The Unity game --> Needs to be unzipped. The "Room Escape.exe" file inside needs to be executed to launch the game|
+
+## Setup
+Please follow the below steps to launch this project:
+ - [ ] List item
