@@ -21,8 +21,6 @@ We highly recommend running this project on a dual screen setup.
 The laptop (with the webcam) will be the secondary screen, and the external monitor is the primary main screen.
 
 Please follow the below steps to launch this project:
- 
- To prepare the python code:
  1. download this github repository.
  2. install all the packages mentioned in requirements.txt `pip install -r requirements.txt`
  3. You may need to separately install the PyAudio package from [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) in case of PyAudio install error in step 2.
