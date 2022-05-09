@@ -16,7 +16,7 @@
 |GameV10.zip|The Unity game --> Needs to be unzipped. The "Room Escape.exe" file inside needs to be executed to launch the game|
 
 ## Setup
-**This project will run using Windows OS (10+) and needs Python 3.9+ a laptop with integrated webcam**
+**This project will run using Windows OS (10+), needs Python 3.9+ and a laptop with integrated webcam**
 We highly recommend running this project on a dual screen setup.
 The laptop (with the webcam) will be the secondary screen, and the external monitor is the primary main screen.
 
