@@ -4,4 +4,4 @@ numpy
 mediapipe
 google-cloud-speech
 pyaudio
-zmq
+pyzmq
