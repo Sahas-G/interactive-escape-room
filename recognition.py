@@ -105,6 +105,7 @@ def inZones(lowerx, upperx, lowery, uppery, x, y):
 
     return zoneList
 
+
 def scaling(original_value, original_max, original_min, scaled_max, scaled_min):
     """
     scale a value from one range to another
@@ -230,13 +231,12 @@ def navigation_recognition(results, lowerx, upperx, lowery, uppery, plocX, plocY
 
 def action_recognition(results, model, threshold):
     global sequence
+
     if results.left_hand_landmarks is not None:
         keypoints = extract_hand_keypoints(results)
     # change hand keypoints to just have left hand data (orginally had rh, lh, remember to change back if model is breaking)
         sequence.append(keypoints)
         current_sequence = sequence[-30:]
-        # current_sequence = sequence[-120:]
-        # current_sequence = current_sequence[::4]
 
         if len(current_sequence) == 30:
             res = model.predict(np.expand_dims(current_sequence, axis=0))[0]
@@ -349,7 +349,7 @@ def recognitionLoop(keyStateData, puzzleStateData):
     global unityState, grabState
 
     # loading recognition model
-    model = keras.models.load_model("model_rh_only.h5")
+    model = keras.models.load_model("action_recognition_model.h5")
 
     cap = cv2.VideoCapture(0)
     # to access external webcam, disable interal webcams in device manager and then the external will become the default "0"
