@@ -26,8 +26,8 @@ Please follow the below steps to launch this project:
  3. You may need to separately install the PyAudio package from [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) in case of PyAudio install error in step 2.
  4. Execute main.py
  5. Wait for the webcam output window to pop up.
- 6. Connect the external display.
- 7. Move the webcam output window to the secondary laptop screen.
- 8. Launch the Unity Game (See steps below)
- 9. Download and unzip the GameV10.zip file 
- 10. Execute the "RoomEscape.exe" file to launch the game.
+ 6. Connect the external display. (The sequence of No.4 - 7 is important)
+ 8. Move the webcam output window to the secondary laptop screen.
+ 9. Launch the Unity Game (See steps below)
+ 10. Download and unzip the GameV10.zip file 
+ 11. Execute the "RoomEscape.exe" file to launch the game.
