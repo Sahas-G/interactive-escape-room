@@ -6,7 +6,7 @@
 |--|--|
 |main.py| Main file to execute - creates and manages threads for multiprocessing |
 |recognition.py| Gesture recognition using MediaPipe which recognizes hand poses, actions, and creates dynamic hot zones for navigation and directly manipulates the mouse in puzzle mode. |
-|model_rh_only.h5| Our trained model that recognizes actions |
+|action_recognition_model.h5| Our trained model that recognizes actions |
 |keyboardController.py| Executes key presses that are added to the keyStateData queue by the other processes. Key presses are singular continuous until stopped, or finite such as 20 key presses.|
 |speechRecognition.py| Speech recognition process looks for pre-determined keywords, and takes corresponding actions such as triggering a key press and opening the help overlay. |
 |room-escape-speech.json| Google Cloud Speech to Text API credentials file|
@@ -31,3 +31,6 @@ Please follow the below steps to launch this project:
  9. Launch the Unity Game (See steps below)
  10. Download and unzip the GameV10.zip file 
  11. Execute the "RoomEscape.exe" file to launch the game.
+
+The model that we trained, called "action_recognition_model.h5", is already loaded and used in the system. 
+The "Action Recognition Training Module" is a jupyter notebook that contains what we used to collect, train and evaluate the model. Specific instructions on running and using the module is included in the notebook. 
