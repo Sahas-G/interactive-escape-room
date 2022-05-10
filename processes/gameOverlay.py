@@ -11,7 +11,7 @@ class Overlay:
         self.root.geometry('1000x800+100+100')
         self.root.attributes('-topmost',True)
 
-        image1 = Image.open('./instruction.png')
+        image1 = Image.open('./processes/instruction.png')
         test = ImageTk.PhotoImage(image1)
         label1 = tk.Label(image=test)
         label1.image = test

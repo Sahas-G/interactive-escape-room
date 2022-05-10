@@ -8,7 +8,7 @@ from six.moves import queue
 
 import os
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./room-escape-speech-58a8764cc576.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./processes/speech/room-escape-speech-58a8764cc576.json"
 
 # Audio recording parameters
 STREAMING_LIMIT = 240000  # 4 minutes

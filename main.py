@@ -1,9 +1,9 @@
-from keyboardController import keyboardController
+from processes.keyboardController import keyboardController
 import multiprocessing
-from speechRecognition import mainSpeechRecognition
-from recognition import recognitionLoop
+from processes.speech.speechRecognition import mainSpeechRecognition
+from processes.gestureRecognition.recognition import recognitionLoop
 import zmq
-from gameOverlay import Overlay
+from processes.gameOverlay import Overlay
 
 
 class interactionClass:

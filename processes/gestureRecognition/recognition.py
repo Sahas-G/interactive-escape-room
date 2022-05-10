@@ -349,7 +349,7 @@ def recognitionLoop(keyStateData, puzzleStateData):
     global unityState, grabState
 
     # loading recognition model
-    model = keras.models.load_model("action_recognition_model.h5")
+    model = keras.models.load_model("./processes/gestureRecognition/action_recognition_model.h5")
 
     cap = cv2.VideoCapture(0)
     # to access external webcam, disable interal webcams in device manager and then the external will become the default "0"
