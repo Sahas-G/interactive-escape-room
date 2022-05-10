@@ -25,22 +25,26 @@
 
 
 ## Setup
-**This project will run using Windows OS (10+) and needs Python 3.9+ a laptop with integrated webcam**
+**This project will run using Windows OS (10+), Python 3.10 and a laptop with integrated webcam**
 We highly recommend running this project on a dual screen setup.
-The laptop (with the webcam) will be the secondary screen, and the external monitor is the primary main screen.
+The laptop (with the webcam) will be the secondary screen, and the external monitor is the **primary/ main** screen.
 
-Please follow the below steps to launch this project:
- 
- To prepare the python code:
+### Installation
  1. download this github repository.
- 2. install all the packages mentioned in requirements.txt `pip install -r requirements.txt`
- 3. You may need to separately install the PyAudio package from [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio) in case of PyAudio install error in step 2.
- 4. Execute main.py
- 5. Wait for the webcam output window to pop up.
- 6. Connect the external display.
- 7. Move the webcam output window to the secondary laptop screen.
- 8. Launch the Unity Game (See steps below)
- 
-To prepare the Unity Game App:
- 9. Download and unzip the GameV10.zip file 
- 10. Execute the "RoomEscape.exe" file to launch the game.
+ 2. install all the packages mentioned in requirements.txt | `pip install -r requirements.txt`
+ 3. You will need to separately install the PyAudio package from [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio), we have also included the exact  library we used inside the assets folder.
+ 4. Download and unzip the GameV10.zip file
+
+### Launch
+ 1. Execute main.py
+ 2. Wait for the webcam output window to pop up.
+ 3. Connect the external display. **[This step is important, connect external display only after webcam output window is visible]**
+ 4. Move the webcam output window to the secondary laptop screen.
+ 5. Execute the "RoomEscape.exe" file to launch the game.
+ 6. Say "Help", and familiarize yourself with the gestures and commands. Say "Close/ Go away" after you're done reading it.
+ 7. Try navigating the room using hand gestures. See the Laptop display with the webcam output for feedback on how the system is responding in real time.
+
+### Troubleshooting
+ 1. You can reduce the speed of panning by going to the in game pause menu --> options --> inputs --> reduce mouse sensitivity 
+ 2.  If you are unable to move forward, there may be furniture in your way. Use "step right", "step left", "step back" and "look back" to maneuver out of the tight spot. 
+ 3. If you are in a neutral position with a fist and you are not moving forward, open your palm and make a fist again
